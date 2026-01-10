@@ -1,0 +1,26 @@
+/* Content script styles */
+
+/* Add any custom styles for match visualization here */
+
+.hattrick-matchview-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  display: none;
+}
+
+.hattrick-matchview-container {
+  position: relative;
+  max-width: 1200px;
+  margin: 50px auto;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Styles will be expanded as features are added */
