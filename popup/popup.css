@@ -63,7 +63,8 @@ main {
 }
 
 footer {
-  text-align: center;
+  display: flex;
+  gap: 8px;
 }
 
 .btn {
@@ -76,7 +77,7 @@ footer {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  width: 100%;
+  flex: 1;
 }
 
 .btn:hover {

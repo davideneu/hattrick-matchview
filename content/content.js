@@ -6,7 +6,7 @@ let dataExtractor = null;
 let dataPanel = null;
 
 // Function to initialize match visualization
-function initializeMatchView() {
+async function initializeMatchView() {
   // Check if we're on a match page
   const isMatchPage = window.location.href.includes('/Club/Matches/Match.aspx');
   
@@ -16,6 +16,13 @@ function initializeMatchView() {
     // Initialize extractor and panel
     dataExtractor = new HattrickMatchDataExtractor();
     dataPanel = new MatchDataPanel();
+    
+    // Initialize API client
+    try {
+      await dataExtractor.initialize();
+    } catch (error) {
+      console.warn('Could not initialize API client:', error);
+    }
     
     // Add a visual indicator and button that the extension is active
     addExtensionIndicator();

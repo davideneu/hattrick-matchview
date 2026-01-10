@@ -8,6 +8,8 @@ Hattrick Matchview is a visualization layer for following matches of the online 
 - ⚽ Enhanced match event display
 - 📊 Match statistics overlay
 - 🎨 Modern, intuitive interface
+- 🔌 **CHPP API integration** with automatic fallback to DOM parsing
+- 🔐 Secure OAuth authentication for API access
 
 ## Installation
 
@@ -37,6 +39,17 @@ _(Publishing to Chrome Web Store coming soon)_
 2. Go to any match page
 3. The extension will automatically enhance your match viewing experience
 4. Click the extension icon to see status and options
+
+### Optional: CHPP API Setup (Recommended)
+
+For better data reliability and more features, you can set up CHPP API access:
+
+1. Register an application at [Hattrick CHPP](https://www.hattrick.org/Community/CHPP/)
+2. Click the extension icon → **⚙️ Settings**
+3. Enter your Consumer Key and Consumer Secret
+4. Click **Authenticate** and approve the application
+
+**Note**: Without API setup, the extension automatically falls back to DOM parsing mode.
 
 ## Project Structure
 

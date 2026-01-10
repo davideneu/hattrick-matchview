@@ -17,15 +17,19 @@
     }
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "identity",
+    "storage"
   ],
   "host_permissions": [
-    "https://*.hattrick.org/*"
+    "https://*.hattrick.org/*",
+    "https://chpp.hattrick.org/*"
   ],
   "content_scripts": [
     {
       "matches": ["https://*.hattrick.org/*"],
       "js": [
+        "api/chppApiClient.js",
         "content/matchDataExtractor.js",
         "content/fieldVisualization.js",
         "content/matchDataPanel.js",

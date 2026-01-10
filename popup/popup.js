@@ -56,6 +56,12 @@ document.getElementById('options-btn').addEventListener('click', () => {
   alert('Options page coming soon!');
 });
 
+// Settings button handler
+document.getElementById('settings-btn').addEventListener('click', () => {
+  // Open settings page in a new tab
+  chrome.tabs.create({ url: chrome.runtime.getURL('popup/settings.html') });
+});
+
 // Initialize on popup load
 document.addEventListener('DOMContentLoaded', () => {
   checkHattrickStatus();
