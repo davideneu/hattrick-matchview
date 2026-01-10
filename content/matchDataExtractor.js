@@ -119,21 +119,22 @@ class HattrickMatchDataExtractor {
     };
 
     // Try to extract match type from page - look for header elements
-    // Avoid "loading" text by checking multiple selectors
+    // Use more specific selectors and validate the content
     const matchHeaderSelectors = [
       '.matchHeader',
       '.boxHead',
       'h1',
-      '[class*="header"]',
-      '[class*="title"]'
+      '[class*="header"]'
     ];
     
     for (const selector of matchHeaderSelectors) {
       const headers = document.querySelectorAll(selector);
       for (const header of headers) {
         const text = header.textContent.trim();
-        // Skip if it's a loading message
-        if (text && text.length > 0 && text.length < 100 && !this.isLoadingText(text)) {
+        // Skip if it's a loading message, navigation element, or too short/long
+        if (text && text.length > 5 && text.length < 100 && 
+            !this.isLoadingText(text) && 
+            !this.isNavigationOrUIElement(text, header)) {
           matchInfo.type = text;
           break;
         }
@@ -142,29 +143,33 @@ class HattrickMatchDataExtractor {
     }
 
     // Extract date if available - look for date/time elements
+    // Be more specific and validate content
     const dateSelectors = [
-      '.date',
       '.matchDate',
+      '.date',
       'time',
-      '[class*="date"]',
       '[datetime]'
     ];
     
     for (const selector of dateSelectors) {
       const elements = document.querySelectorAll(selector);
-      if (elements.length > 0) {
-        const dateText = elements[0].textContent.trim();
-        if (dateText && !this.isLoadingText(dateText)) {
-          matchInfo.date = dateText;
-          break;
-        }
-        // Also check datetime attribute
-        const datetime = elements[0].getAttribute('datetime');
+      for (const element of elements) {
+        // First try to get datetime attribute (most reliable)
+        const datetime = element.getAttribute('datetime');
         if (datetime) {
           matchInfo.date = datetime;
           break;
         }
+        
+        // Otherwise try text content
+        const dateText = element.textContent.trim();
+        if (dateText && !this.isLoadingText(dateText) && 
+            !this.isNavigationOrUIElement(dateText, element)) {
+          matchInfo.date = dateText;
+          break;
+        }
       }
+      if (matchInfo.date) break;
     }
 
     return matchInfo;
@@ -188,6 +193,64 @@ class HattrickMatchDataExtractor {
     ];
     
     return loadingPhrases.some(phrase => lowerText.includes(phrase));
+  }
+
+  // Helper to check if text is navigation or UI element (not match data)
+  isNavigationOrUIElement(text, element) {
+    if (!text) return true;
+    
+    // Check for navigation arrows
+    const navigationPatterns = [
+      '>>',
+      '<<',
+      '»',
+      '«',
+      '›',
+      '‹',
+      'successivo',  // Italian: next
+      'precedente',  // Italian: previous
+      'next',
+      'previous',
+      'weiter',      // German: next
+      'zurück'       // German: back
+    ];
+    
+    const lowerText = text.toLowerCase();
+    if (navigationPatterns.some(pattern => lowerText.includes(pattern))) {
+      return true;
+    }
+    
+    // Check for promotional/ad keywords
+    const adKeywords = [
+      'compra',      // Italian: buy
+      'buy',
+      'shop',
+      'regalo',      // Italian: gift
+      'gift',
+      'sponsor',
+      'advertisement',
+      'pubblicità'   // Italian: advertisement
+    ];
+    
+    if (adKeywords.some(keyword => lowerText.includes(keyword))) {
+      return true;
+    }
+    
+    // Check if element is a link or button (likely navigation)
+    if (element) {
+      const tagName = element.tagName.toLowerCase();
+      if (tagName === 'a' || tagName === 'button') {
+        return true;
+      }
+      
+      // Check if element is inside a link or button
+      const parentLink = element.closest('a, button');
+      if (parentLink) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   // Extract team information
