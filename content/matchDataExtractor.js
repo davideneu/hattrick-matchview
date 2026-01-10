@@ -186,10 +186,14 @@ class HattrickMatchDataExtractor {
 
     // Try to extract match type from page - look for header elements
     // Use more specific selectors and validate the content
+    // Order matters: more specific selectors first
     const matchHeaderSelectors = [
+      '.league',         // League/division name (most specific)
+      '.match-type',
       '.matchHeader',
       '.boxHead',
       'h1',
+      'h2',
       '[class*="header"]'
     ];
     
@@ -197,8 +201,20 @@ class HattrickMatchDataExtractor {
       const headers = document.querySelectorAll(selector);
       for (const header of headers) {
         const text = header.textContent.trim();
+        
+        // Skip if the header only contains a link (likely navigation)
+        const links = header.querySelectorAll('a');
+        if (links.length > 0) {
+          const linkText = Array.from(links).map(l => l.textContent.trim()).join(' ').trim();
+          // If the header text is mostly/only link text, skip it
+          if (linkText === text || text.startsWith(linkText)) {
+            continue;
+          }
+        }
+        
         // Skip if it's a loading message, navigation element, or too short/long
-        if (text && text.length > 5 && text.length < 100 && 
+        // Match type should be at least 3 characters (e.g., "V.1") and less than 100
+        if (text && text.length >= 3 && text.length < 100 && 
             !this.isLoadingText(text) && 
             !this.isNavigationOrUIElement(text, header)) {
           matchInfo.type = text;
@@ -213,6 +229,7 @@ class HattrickMatchDataExtractor {
     const dateSelectors = [
       '.matchDate',
       '.date',
+      '.date-time',
       'time',
       '[datetime]'
     ];
@@ -236,6 +253,26 @@ class HattrickMatchDataExtractor {
         }
       }
       if (matchInfo.date) break;
+    }
+
+    // Extract arena if available
+    const arenaSelectors = [
+      '.arena',
+      '[class*="arena"]',
+      '[class*="stadium"]'
+    ];
+    
+    for (const selector of arenaSelectors) {
+      const elements = document.querySelectorAll(selector);
+      for (const element of elements) {
+        const arenaText = element.textContent.trim();
+        if (arenaText && !this.isLoadingText(arenaText) && 
+            !this.isNavigationOrUIElement(arenaText, element)) {
+          matchInfo.arena = arenaText;
+          break;
+        }
+      }
+      if (matchInfo.arena) break;
     }
 
     return matchInfo;
@@ -291,6 +328,8 @@ class HattrickMatchDataExtractor {
       'compra',      // Italian: buy
       'buy',
       'shop',
+      'negozio',     // Italian: shop/store
+      'negozi',      // Italian: shops/stores (plural)
       'regalo',      // Italian: gift
       'gift',
       'sponsor',
