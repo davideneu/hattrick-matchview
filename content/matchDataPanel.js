@@ -228,7 +228,6 @@ class MatchDataPanel {
       this.fieldVisualization.showEvent(currentEvent);
     }
   }
-  }
 
   // Create event element with optional typewriter effect
   createEventElement(event, useTypewriter) {
@@ -566,9 +565,4 @@ class MatchDataPanel {
       this.removePanel();
     }
   }
-}
-
-// Export for use in content script
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = MatchDataPanel;
 }
