@@ -104,15 +104,33 @@ The `HattrickMatchDataExtractor` class:
 - Parses and structures data into JavaScript objects
 - Handles missing data gracefully
 
+### Dynamic Content Loading
+
+**Update (v1.1)**: The extension now properly handles Hattrick's dynamic content loading:
+
+- **Async Extraction**: Data extraction is now asynchronous and waits for content to load
+- **Loading Detection**: Automatically detects and skips loading placeholders (Rive animations, canvas elements)
+- **Multi-language Support**: Recognizes "loading" messages in 8+ languages (Italian, English, German, Spanish, French, Portuguese, Swedish)
+- **Smart Polling**: Checks for real content every 500ms, with a 15-second timeout
+- **User Feedback**: Shows loading indicator while waiting for data
+
+The extension now waits for:
+- Team names to appear in the DOM
+- Real match events (not loading animations)
+- Removal of "Please wait" / "Attendere prego" messages
+
 ### Known Limitations
 
 1. **Selector Dependency**: Relies on Hattrick's HTML structure
    - May need updates if Hattrick changes their page structure
    - Some data might not be found on all match types
 
-2. **Language Variations**: Currently optimized for English/Italian
-   - Event detection looks for keywords like "goal", "gol", etc.
-   - May need adjustment for other languages
+2. **Language Variations**: Event detection supports multiple languages
+   - Goal keywords: "goal", "gol"
+   - Yellow card: "yellow", "giallo", "gelb", "amarillo"
+   - Red card: "red", "rosso", "rot", "rojo"
+   - Substitution: "substitution", "cambio", "sostituzione", "auswechslung"
+   - Additional languages can be added as needed
 
 3. **Historical Matches**: Some data may be incomplete
    - Older matches might have different page structures
@@ -137,10 +155,23 @@ Planned improvements:
 - Try refreshing the page
 - Check browser console for errors (F12)
 
+### "Loading match data..." Appears But Never Completes
+- The page may be slow to load or have connectivity issues
+- The extension waits up to 15 seconds for content to load
+- After timeout, it will extract whatever data is available
+- Check browser console for "Timeout waiting for page to load" warning
+
 ### Missing or Incomplete Data
 - Some match pages may have different structures
 - Partial data extraction is normal; the extension handles this gracefully
 - Check the browser console for extraction logs
+- If data shows "Attendere prego" or "Please wait", the page is still loading
+
+### Data Shows Only Null Values
+- This typically means the page content hasn't loaded yet
+- Wait a few more seconds and try clicking "Show Match Data" again
+- Check your internet connection
+- Ensure JavaScript is enabled in your browser
 
 ### Button Not Visible
 - Check if another element is covering it
