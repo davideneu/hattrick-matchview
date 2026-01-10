@@ -110,12 +110,20 @@ function addDataFetchButton() {
 }
 
 // Fetch and display match data
-function fetchAndDisplayMatchData() {
+async function fetchAndDisplayMatchData() {
   console.log('Fetching match data...');
   
+  // Show loading indicator
+  const loadingMsg = showLoadingMessage('Loading match data...');
+  
   try {
-    // Extract data from page
-    const matchData = dataExtractor.extractMatchData();
+    // Extract data from page (now async)
+    const matchData = await dataExtractor.extractMatchData();
+    
+    // Remove loading indicator
+    if (loadingMsg && loadingMsg.parentNode) {
+      loadingMsg.parentNode.removeChild(loadingMsg);
+    }
     
     // Display in panel
     dataPanel.createPanel(matchData);
@@ -123,8 +131,50 @@ function fetchAndDisplayMatchData() {
     console.log('Match data displayed successfully');
   } catch (error) {
     console.error('Error fetching match data:', error);
+    
+    // Remove loading indicator
+    if (loadingMsg && loadingMsg.parentNode) {
+      loadingMsg.parentNode.removeChild(loadingMsg);
+    }
+    
     alert('Error fetching match data. See console for details.');
   }
+}
+
+// Show loading message
+function showLoadingMessage(message) {
+  const loadingDiv = document.createElement('div');
+  loadingDiv.id = 'hattrick-loading-msg';
+  loadingDiv.textContent = message;
+  loadingDiv.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 40px;
+    border-radius: 10px;
+    font-family: sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 10001;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    animation: pulse 1.5s ease-in-out infinite;
+  `;
+  
+  // Add pulse animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
+    }
+  `;
+  document.head.appendChild(style);
+  document.body.appendChild(loadingDiv);
+  
+  return loadingDiv;
 }
 
 // Initialize when DOM is ready
@@ -139,19 +189,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Content script received message:', request);
   
   if (request.action === 'getMatchData') {
-    // Extract and return match data
+    // Extract and return match data (async)
     if (dataExtractor) {
-      const matchData = dataExtractor.extractMatchData();
-      sendResponse({ status: 'success', data: matchData });
+      dataExtractor.extractMatchData().then(matchData => {
+        sendResponse({ status: 'success', data: matchData });
+      }).catch(error => {
+        sendResponse({ status: 'error', message: error.message });
+      });
     } else {
       sendResponse({ status: 'error', message: 'Not on a match page' });
     }
+    return true; // Keep message channel open for async response
   }
   
   if (request.action === 'showMatchData') {
-    // Show the data panel
-    fetchAndDisplayMatchData();
-    sendResponse({ status: 'success' });
+    // Show the data panel (async)
+    fetchAndDisplayMatchData().then(() => {
+      sendResponse({ status: 'success' });
+    }).catch(error => {
+      sendResponse({ status: 'error', message: error.message });
+    });
+    return true; // Keep message channel open for async response
   }
   
   return true; // Keep message channel open for async response

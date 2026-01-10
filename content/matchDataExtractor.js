@@ -7,8 +7,11 @@ class HattrickMatchDataExtractor {
   }
 
   // Main extraction function
-  extractMatchData() {
+  async extractMatchData() {
     console.log('Starting match data extraction...');
+    
+    // Wait for the page to finish loading dynamic content
+    await this.waitForPageLoad();
     
     const matchData = {
       matchInfo: this.extractMatchInfo(),
@@ -23,6 +26,89 @@ class HattrickMatchDataExtractor {
     return matchData;
   }
 
+  // Wait for dynamic content to load
+  async waitForPageLoad(maxWaitTime = 15000) {
+    console.log('Waiting for page content to load...');
+    
+    const startTime = Date.now();
+    const checkInterval = 500; // Check every 500ms
+    
+    while (Date.now() - startTime < maxWaitTime) {
+      // Check for indicators that the page has loaded
+      const hasTeamNames = document.querySelectorAll('a[href*="TeamID"]').length >= 2;
+      const hasEvents = this.hasRealEvents();
+      const notLoadingText = !this.hasLoadingText();
+      
+      if (hasTeamNames && hasEvents && notLoadingText) {
+        console.log('Page content loaded successfully');
+        return true;
+      }
+      
+      // Wait before next check
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+    }
+    
+    console.warn('Timeout waiting for page to load, proceeding with extraction anyway');
+    return false;
+  }
+
+  // Check if the page has loading text
+  hasLoadingText() {
+    const bodyText = document.body.textContent.toLowerCase();
+    const loadingPhrases = [
+      'attendere prego', // Italian: Please wait
+      'please wait',     // English
+      'bitte warten',    // German
+      'espere por favor', // Spanish
+      'veuillez patienter', // French
+      'por favor aguarde', // Portuguese
+      'vänligen vänta', // Swedish
+      'loading',
+      'cargando',
+      'chargement'
+    ];
+    
+    return loadingPhrases.some(phrase => bodyText.includes(phrase));
+  }
+
+  // Check if there are real events (not just loading placeholders)
+  hasRealEvents() {
+    // Look for event containers
+    const eventSelectors = [
+      '.matchEvent',
+      '.event',
+      '.commentary',
+      '.telecronaca',
+      '[class*="event"]',
+      '[class*="comment"]'
+    ];
+    
+    for (const selector of eventSelectors) {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        // Check if any element has real content (not just loading animations)
+        for (const element of elements) {
+          const text = element.textContent.trim();
+          const hasMinute = /\d+['′]/.test(text);
+          const hasCanvas = element.querySelector('canvas');
+          const hasRiveAnimator = element.querySelector('[class*="rive"]');
+          
+          // If it has a minute marker and no loading animations, it's real
+          if (hasMinute && !hasCanvas && !hasRiveAnimator) {
+            return true;
+          }
+          
+          // If it has substantial text content (more than 10 chars) and no animations
+          if (text.length > 10 && !hasCanvas && !hasRiveAnimator) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
+
   // Extract basic match information
   extractMatchInfo() {
     const matchInfo = {
@@ -32,19 +118,76 @@ class HattrickMatchDataExtractor {
       arena: null
     };
 
-    // Try to extract match date and type from page
-    const matchHeader = document.querySelector('.matchHeader, .boxHead, h1');
-    if (matchHeader) {
-      matchInfo.type = matchHeader.textContent.trim();
+    // Try to extract match type from page - look for header elements
+    // Avoid "loading" text by checking multiple selectors
+    const matchHeaderSelectors = [
+      '.matchHeader',
+      '.boxHead',
+      'h1',
+      '[class*="header"]',
+      '[class*="title"]'
+    ];
+    
+    for (const selector of matchHeaderSelectors) {
+      const headers = document.querySelectorAll(selector);
+      for (const header of headers) {
+        const text = header.textContent.trim();
+        // Skip if it's a loading message
+        if (text && text.length > 0 && text.length < 100 && !this.isLoadingText(text)) {
+          matchInfo.type = text;
+          break;
+        }
+      }
+      if (matchInfo.type) break;
     }
 
-    // Extract date if available
-    const dateElements = document.querySelectorAll('.date, .matchDate, time');
-    if (dateElements.length > 0) {
-      matchInfo.date = dateElements[0].textContent.trim();
+    // Extract date if available - look for date/time elements
+    const dateSelectors = [
+      '.date',
+      '.matchDate',
+      'time',
+      '[class*="date"]',
+      '[datetime]'
+    ];
+    
+    for (const selector of dateSelectors) {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        const dateText = elements[0].textContent.trim();
+        if (dateText && !this.isLoadingText(dateText)) {
+          matchInfo.date = dateText;
+          break;
+        }
+        // Also check datetime attribute
+        const datetime = elements[0].getAttribute('datetime');
+        if (datetime) {
+          matchInfo.date = datetime;
+          break;
+        }
+      }
     }
 
     return matchInfo;
+  }
+
+  // Helper to check if text is a loading message
+  isLoadingText(text) {
+    const lowerText = text.toLowerCase();
+    const loadingPhrases = [
+      'attendere prego',
+      'please wait',
+      'bitte warten',
+      'espere por favor',
+      'veuillez patienter',
+      'por favor aguarde',
+      'vänligen vänta',
+      'loading',
+      'cargando',
+      'chargement',
+      'laden'
+    ];
+    
+    return loadingPhrases.some(phrase => lowerText.includes(phrase));
   }
 
   // Extract team information
@@ -178,6 +321,16 @@ class HattrickMatchDataExtractor {
     eventElements.forEach((element, index) => {
       const text = element.textContent.trim();
       
+      // Skip elements with loading indicators
+      const hasCanvas = element.querySelector('canvas');
+      const hasRiveAnimator = element.querySelector('[class*="rive"]');
+      const isLoadingText = this.isLoadingText(text);
+      
+      // Skip if it's a loading placeholder
+      if (hasCanvas || hasRiveAnimator || isLoadingText || text.length < 3) {
+        return;
+      }
+      
       // Extract minute
       const minuteMatch = text.match(/(\d+)['′]/);
       const minute = minuteMatch ? parseInt(minuteMatch[1]) : null;
@@ -186,11 +339,11 @@ class HattrickMatchDataExtractor {
       let eventType = 'info';
       if (text.toLowerCase().includes('goal') || text.toLowerCase().includes('gol')) {
         eventType = 'goal';
-      } else if (text.toLowerCase().includes('yellow') || text.toLowerCase().includes('giallo')) {
+      } else if (text.toLowerCase().includes('yellow') || text.toLowerCase().includes('giallo') || text.toLowerCase().includes('gelb') || text.toLowerCase().includes('amarillo')) {
         eventType = 'yellow_card';
-      } else if (text.toLowerCase().includes('red') || text.toLowerCase().includes('rosso')) {
+      } else if (text.toLowerCase().includes('red') || text.toLowerCase().includes('rosso') || text.toLowerCase().includes('rot') || text.toLowerCase().includes('rojo')) {
         eventType = 'red_card';
-      } else if (text.toLowerCase().includes('substitution') || text.toLowerCase().includes('cambio')) {
+      } else if (text.toLowerCase().includes('substitution') || text.toLowerCase().includes('cambio') || text.toLowerCase().includes('sostituzione') || text.toLowerCase().includes('auswechslung')) {
         eventType = 'substitution';
       }
 
