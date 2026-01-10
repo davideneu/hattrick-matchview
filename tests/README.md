@@ -88,26 +88,52 @@ All tests should pass with the current implementation. If any tests fail, it ind
 
 To add new tests:
 
-1. Add a new test function following the pattern:
+1. **Add test data to match-sample.html** if needed for the new test case
+
+2. **Add a new test function** in `run-tests.js`:
 ```javascript
 async function testNewFeature() {
     const sectionName = 'X. New Feature Test';
     try {
-        // Your test logic
-        addTestResult(sectionName, 'Test name', 
-            condition, 
-            'Message',
-            optionalDetails);
+        // Your test logic here
+        const result = extractor.extractNewFeature();
+        
+        testResult(
+            'Feature works correctly',
+            result === expectedValue,
+            'expected',
+            result
+        );
     } catch (error) {
-        addTestResult(sectionName, 'Error in test', false, error.message);
+        log(`  ✗ Error in test: ${error.message}`, colors.red);
     }
 }
 ```
 
-2. Call the function in `runAllTests()`:
+3. **Call the function in `runTests()`**:
 ```javascript
 await testNewFeature();
 ```
+
+4. **Run tests** to verify:
+```bash
+npm test
+```
+
+## Test Structure
+
+The test suite validates DOM parsing by:
+1. Loading a mock Hattrick HTML page (`match-sample.html`)
+2. Instantiating the `HattrickMatchDataExtractor` 
+3. Calling extraction methods
+4. Validating results against expected values
+
+Each test section focuses on a specific extraction capability:
+- Match info (ID, date, league, arena)
+- Teams (names, scores)
+- Events (goals, cards, substitutions)
+- Statistics (possession, chances)
+- Players (lineups, IDs)
 
 ## Notes
 

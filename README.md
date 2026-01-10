@@ -89,6 +89,22 @@ This extension uses Chrome Manifest V3 (the latest standard).
 3. Click the refresh icon on the Hattrick Matchview extension
 4. Test your changes on Hattrick.org
 
+#### Running DOM Parser Tests
+
+The extension includes comprehensive tests for the DOM parsing functionality:
+
+```bash
+# Install dependencies (first time only)
+npm install
+
+# Run tests
+npm test
+```
+
+Or open `tests/test-runner.html` in a browser for an interactive test interface.
+
+See [tests/TEST_RESULTS.md](tests/TEST_RESULTS.md) for detailed test results and coverage.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
