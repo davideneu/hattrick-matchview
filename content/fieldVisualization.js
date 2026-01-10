@@ -441,6 +441,12 @@ class FieldVisualization {
   // Highlight specific players (for events)
   highlightPlayers(playerIds) {
     this.highlightedPlayers = playerIds || [];
+    
+    // If field is not created, do nothing
+    if (!this.ctx || !this.canvas) {
+      return;
+    }
+    
     this.drawField();
     this.drawPlayers();
   }
@@ -448,6 +454,11 @@ class FieldVisualization {
   // Show event on field
   showEvent(event) {
     this.currentEvent = event;
+    
+    // If field is not created, do nothing
+    if (!this.ctx || !this.canvas) {
+      return;
+    }
     
     // Extract player IDs from event if possible
     // This is a simplified approach - in real implementation,
@@ -466,6 +477,9 @@ class FieldVisualization {
   // Draw event indicator on field
   drawEventIndicator(event) {
     const ctx = this.ctx;
+    
+    // Safety check
+    if (!ctx) return;
     
     // Position event icon at top center of field
     const x = this.width / 2;
