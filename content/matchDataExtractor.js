@@ -226,8 +226,3 @@ class HattrickMatchDataExtractor {
     return this.matchData;
   }
 }
-
-// Export for use in content script
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = HattrickMatchDataExtractor;
-}
