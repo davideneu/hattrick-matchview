@@ -20,11 +20,11 @@
     "activeTab"
   ],
   "host_permissions": [
-    "https://www.hattrick.org/*"
+    "https://*.hattrick.org/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://www.hattrick.org/*"],
+      "matches": ["https://*.hattrick.org/*"],
       "js": [
         "content/matchDataExtractor.js",
         "content/matchDataPanel.js",
