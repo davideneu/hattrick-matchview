@@ -53,6 +53,9 @@ class MatchDataPanel {
     // Add event listeners
     this.attachEventListeners();
 
+    // Initialize display with 'all' mode (default)
+    this.setDisplayMode('all');
+
     this.isVisible = true;
   }
 
