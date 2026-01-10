@@ -27,10 +27,11 @@
       "matches": ["https://*.hattrick.org/*"],
       "js": [
         "content/matchDataExtractor.js",
+        "content/fieldVisualization.js",
         "content/matchDataPanel.js",
         "content/content.js"
       ],
-      "css": ["content/content.css"]
+      "css": ["content/content.css", "content/fieldVisualization.css"]
     }
   ],
   "background": {
