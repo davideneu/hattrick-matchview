@@ -93,7 +93,7 @@ class HattrickMatchDataExtractor {
   }
 
   // Wait for dynamic content to load
-  async waitForPageLoad(maxWaitTime = 15000) {
+  async waitForPageLoad(maxWaitTime = 20000) {
     console.log('Waiting for page content to load...');
     
     const startTime = Date.now();
@@ -105,8 +105,17 @@ class HattrickMatchDataExtractor {
       const hasEvents = this.hasRealEvents();
       const notLoadingText = !this.hasLoadingText();
       
-      if (hasTeamNames && hasEvents && notLoadingText) {
+      // Consider the page loaded if we have team names and no loading indicators
+      // Events might not be present for pre-match or if they load separately
+      if (hasTeamNames && notLoadingText) {
         console.log('Page content loaded successfully');
+        return true;
+      }
+      
+      // Also check if we have events even without team names (partial load)
+      // This helps when team names are in a different part of the page
+      if (hasEvents && notLoadingText) {
+        console.log('Page content partially loaded (events available)');
         return true;
       }
       
