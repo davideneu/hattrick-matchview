@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Match Page with Shop Link - Hattrick</title>
+</head>
+<body>
+    <!-- This simulates a real Hattrick page with shop/navigation elements -->
+    <!-- that should NOT be picked up as match type -->
+    
+    <!-- Navigation/Shop header that should be SKIPPED -->
+    <h1><a href="/Shop">Il nostro negozio</a></h1>
+    
+    <div class="match-header">
+        <div class="teams">
+            <a href="?TeamID=1234567">Team Paradiso</a>
+            <span class="score">2 - 0</span>
+            <a href="?TeamID=7654321">V.227</a>
+        </div>
+        
+        <div class="match-info">
+            <!-- Correct match type should be this -->
+            <div class="league">V.227</div>
+            <div class="round">Turno 5 di V.227</div>
+            <div class="date-time">10/01/2026 12:00</div>
+            <div class="match-id">(757402591)</div>
+            <div class="arena">Test Arena</div>
+        </div>
+    </div>
+
+    <!-- Match Commentary -->
+    <div class="match-commentary">
+        <h2>Cronaca</h2>
+        
+        <div class="event event-goal">
+            <span class="minute">18</span>
+            <p>Goal at minute 18!</p>
+        </div>
+        
+        <div class="event event-goal">
+            <span class="minute">45</span>
+            <p>Goal at minute 45!</p>
+        </div>
+    </div>
+
+    <!-- Match Statistics -->
+    <div class="match-stats">
+        <h3>Possesso palla:</h3>
+        <table>
+            <tr>
+                <td>Primo tempo</td>
+                <td>48%</td>
+                <td>52%</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Players -->
+    <div class="lineups">
+        <div class="home-lineup">
+            <h4>Team Paradiso</h4>
+            <ul>
+                <li><a href="?PlayerID=111111">Player One</a> (GK)</li>
+                <li><a href="?PlayerID=111112">Player Two</a></li>
+            </ul>
+        </div>
+        <div class="away-lineup">
+            <h4>V.227</h4>
+            <ul>
+                <li><a href="?PlayerID=222221">Player Three</a> (GK)</li>
+                <li><a href="?PlayerID=222222">Player Four</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
