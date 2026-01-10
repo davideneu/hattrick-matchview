@@ -1,14 +1,80 @@
 // Match Data Extractor for Hattrick
-// Extracts match information from the Hattrick match page HTML
+// Fetches match information from the Hattrick CHPP API
 
 class HattrickMatchDataExtractor {
   constructor() {
     this.matchData = null;
+    this.apiClient = new CHPPApiClient();
+    this.useAPI = false; // Flag to use API vs DOM parsing
+  }
+
+  // Initialize the extractor
+  async initialize() {
+    // Check if API client is authenticated
+    const isAuthenticated = await this.apiClient.initialize();
+    this.useAPI = isAuthenticated;
+    console.log(`Data extraction method: ${this.useAPI ? 'CHPP API' : 'DOM parsing (fallback)'}`);
+    return this.useAPI;
   }
 
   // Main extraction function
   async extractMatchData() {
     console.log('Starting match data extraction...');
+    
+    // Get match ID from URL
+    const matchId = this.getMatchIdFromUrl();
+    if (!matchId) {
+      throw new Error('Could not extract match ID from URL');
+    }
+
+    let matchData;
+
+    // Try to use API first if authenticated
+    if (this.useAPI) {
+      try {
+        console.log('Fetching match data from CHPP API...');
+        matchData = await this.extractFromAPI(matchId);
+        console.log('Match data fetched from API successfully');
+      } catch (error) {
+        console.error('API extraction failed, falling back to DOM parsing:', error);
+        this.useAPI = false;
+        matchData = await this.extractFromDOM();
+      }
+    } else {
+      // Fallback to DOM parsing
+      console.log('Using DOM parsing (API not authenticated)');
+      matchData = await this.extractFromDOM();
+    }
+
+    this.matchData = matchData;
+    console.log('Match data extracted:', matchData);
+    return matchData;
+  }
+
+  // Extract data from CHPP API
+  async extractFromAPI(matchId) {
+    // Fetch match details and events in parallel
+    const [matchDetails, liveEvents] = await Promise.all([
+      this.apiClient.getMatchDetails(matchId),
+      this.apiClient.getLiveMatchEvents(matchId).catch(err => {
+        console.warn('Could not fetch live events:', err);
+        return [];
+      })
+    ]);
+
+    // Merge the data
+    return {
+      matchInfo: matchDetails.matchInfo,
+      teams: matchDetails.teams,
+      players: matchDetails.players,
+      stats: matchDetails.stats,
+      events: liveEvents
+    };
+  }
+
+  // Extract data from DOM (fallback method)
+  async extractFromDOM() {
+    console.log('Extracting data from DOM...');
     
     // Wait for the page to finish loading dynamic content
     await this.waitForPageLoad();
@@ -22,7 +88,7 @@ class HattrickMatchDataExtractor {
     };
 
     this.matchData = matchData;
-    console.log('Match data extracted:', matchData);
+    console.log('Match data extracted from DOM:', matchData);
     return matchData;
   }
 
@@ -440,5 +506,15 @@ class HattrickMatchDataExtractor {
   // Get the extracted data
   getMatchData() {
     return this.matchData;
+  }
+
+  // Check if API is available
+  isAPIAvailable() {
+    return this.useAPI;
+  }
+
+  // Get API client for authentication management
+  getAPIClient() {
+    return this.apiClient;
   }
 }

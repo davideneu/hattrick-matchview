@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hattrick Matchview Settings</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚽ Hattrick Matchview Settings</h1>
+      <p class="subtitle">Configure CHPP API Access</p>
+    </header>
+
+    <main>
+      <section class="api-status">
+        <h2>API Status</h2>
+        <div id="status-display" class="status-box">
+          <span id="status-icon">⚪</span>
+          <span id="status-text">Checking authentication...</span>
+        </div>
+      </section>
+
+      <section class="api-config">
+        <h2>CHPP API Configuration</h2>
+        <div class="info-box">
+          <p><strong>Note:</strong> To use the CHPP API, you need to register your application at Hattrick's CHPP website.</p>
+          <ol>
+            <li>Go to <a href="https://www.hattrick.org/Community/CHPP/" target="_blank">Hattrick CHPP</a></li>
+            <li>Register a new application</li>
+            <li>Get your Consumer Key and Consumer Secret</li>
+            <li>Enter them below and click "Authenticate"</li>
+          </ol>
+        </div>
+
+        <form id="api-config-form">
+          <div class="form-group">
+            <label for="consumer-key">Consumer Key:</label>
+            <input type="text" id="consumer-key" placeholder="Enter your CHPP consumer key" />
+          </div>
+
+          <div class="form-group">
+            <label for="consumer-secret">Consumer Secret:</label>
+            <input type="password" id="consumer-secret" placeholder="Enter your CHPP consumer secret" />
+          </div>
+
+          <div class="button-group">
+            <button type="submit" id="authenticate-btn" class="btn btn-primary">
+              🔐 Authenticate with Hattrick
+            </button>
+            <button type="button" id="clear-auth-btn" class="btn btn-secondary">
+              🗑️ Clear Authentication
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="fallback-mode">
+        <h2>Fallback Mode</h2>
+        <div class="info-box">
+          <p>If you don't have CHPP API credentials, the extension will automatically fall back to DOM parsing mode, which reads match data directly from the web page.</p>
+          <p><strong>DOM Parsing Mode:</strong></p>
+          <ul>
+            <li>✅ No API credentials required</li>
+            <li>✅ Works immediately</li>
+            <li>⚠️ Limited to data visible on the page</li>
+            <li>⚠️ May be affected by page changes</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Hattrick Matchview v1.0.0</p>
+    </footer>
+  </div>
+
+  <script src="../api/chppApiClient.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
