@@ -395,12 +395,14 @@ class HattrickMatchDataExtractor {
       const text = row.textContent.toLowerCase();
       
       // Try to extract possession
-      if (text.includes('possesso') || text.includes('possession')) {
-        const numbers = text.match(/(\d+)/g);
-        if (numbers && numbers.length >= 2) {
+      // Look for rows with "possesso" OR rows with "primo tempo" / "first half" with percentages
+      if (text.includes('possesso') || text.includes('possession') || 
+          (text.includes('primo tempo') || text.includes('first half')) && text.includes('%')) {
+        const percentages = text.match(/(\d+)%/g);
+        if (percentages && percentages.length >= 2) {
           stats.possession = {
-            home: parseInt(numbers[0]),
-            away: parseInt(numbers[1])
+            home: parseInt(percentages[0].replace('%', '')),
+            away: parseInt(percentages[1].replace('%', ''))
           };
         }
       }
@@ -461,18 +463,31 @@ class HattrickMatchDataExtractor {
       }
       
       // Extract minute
-      const minuteMatch = text.match(/(\d+)['′]/);
-      const minute = minuteMatch ? parseInt(minuteMatch[1]) : null;
+      // First try to get from a dedicated minute element
+      const minuteElement = element.querySelector('.minute, [class*="minute"]');
+      let minute = null;
+      
+      if (minuteElement) {
+        minute = parseInt(minuteElement.textContent.trim());
+      } else {
+        // Otherwise try to extract from text with apostrophe marker
+        const minuteMatch = text.match(/(\d+)['′]/);
+        minute = minuteMatch ? parseInt(minuteMatch[1]) : null;
+      }
 
       // Extract event type and description
       let eventType = 'info';
-      if (text.toLowerCase().includes('goal') || text.toLowerCase().includes('gol')) {
+      const lowerText = text.toLowerCase();
+      
+      // Detect goals - check for multiple patterns
+      if (lowerText.includes('goal') || lowerText.includes('gol') ||
+          /\d+\s*[-a]\s*\d+/.test(lowerText) && (lowerText.includes('vale') || lowerText.includes('porta') || lowerText.includes('segna'))) {
         eventType = 'goal';
-      } else if (text.toLowerCase().includes('yellow') || text.toLowerCase().includes('giallo') || text.toLowerCase().includes('gelb') || text.toLowerCase().includes('amarillo')) {
+      } else if (lowerText.includes('yellow') || lowerText.includes('giallo') || lowerText.includes('gelb') || lowerText.includes('amarillo')) {
         eventType = 'yellow_card';
-      } else if (text.toLowerCase().includes('red') || text.toLowerCase().includes('rosso') || text.toLowerCase().includes('rot') || text.toLowerCase().includes('rojo')) {
+      } else if (lowerText.includes('red') || lowerText.includes('rosso') || lowerText.includes('rot') || lowerText.includes('rojo')) {
         eventType = 'red_card';
-      } else if (text.toLowerCase().includes('substitution') || text.toLowerCase().includes('cambio') || text.toLowerCase().includes('sostituzione') || text.toLowerCase().includes('auswechslung')) {
+      } else if (lowerText.includes('substitution') || lowerText.includes('cambio') || lowerText.includes('sostituzione') || lowerText.includes('auswechslung')) {
         eventType = 'substitution';
       }
 
