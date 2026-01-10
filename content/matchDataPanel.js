@@ -13,6 +13,7 @@ class MatchDataPanel {
     this.isPaused = false;
     this.autoPlayInterval = null;
     this.typewriterIntervals = [];
+    this.fieldVisualization = null;
   }
 
   // Create and show the panel
@@ -35,7 +36,10 @@ class MatchDataPanel {
     this.panel.innerHTML = `
       <div class="panel-header">
         <h2>⚽ Hattrick Match Data</h2>
-        <button class="close-btn" id="close-panel">✕</button>
+        <div class="header-buttons">
+          <button class="show-field-btn" id="show-field-btn" title="Show Football Field">⚽ Field View</button>
+          <button class="close-btn" id="close-panel">✕</button>
+        </div>
       </div>
       <div class="panel-content">
         ${this.generateMatchInfoHTML(matchData.matchInfo)}
@@ -63,6 +67,11 @@ class MatchDataPanel {
   attachEventListeners() {
     document.getElementById('close-panel').addEventListener('click', () => {
       this.removePanel();
+    });
+
+    // Field visualization button
+    document.getElementById('show-field-btn')?.addEventListener('click', () => {
+      this.showFieldVisualization();
     });
 
     // Mode selection buttons
@@ -179,6 +188,8 @@ class MatchDataPanel {
     if (!eventsContainer) return;
 
     eventsContainer.innerHTML = '';
+    
+    let currentEvent = null;
 
     if (this.displayMode === 'all') {
       // Show all events
@@ -195,6 +206,10 @@ class MatchDataPanel {
         const eventElement = this.createEventElement(event, true);
         eventsContainer.appendChild(eventElement);
       });
+      // Get most recent event for field visualization
+      if (eventsToShow.length > 0) {
+        currentEvent = eventsToShow[eventsToShow.length - 1];
+      }
     } else if (this.displayMode === 'manual' || this.displayMode === 'auto') {
       // Show events up to current index
       for (let i = 0; i < this.currentEventIndex; i++) {
@@ -202,7 +217,17 @@ class MatchDataPanel {
         const eventElement = this.createEventElement(event, true);
         eventsContainer.appendChild(eventElement);
       }
+      // Get current event for field visualization
+      if (this.currentEventIndex > 0) {
+        currentEvent = this.matchData.events[this.currentEventIndex - 1];
+      }
     }
+    
+    // Update field visualization if it's visible
+    if (this.fieldVisualization && currentEvent) {
+      this.fieldVisualization.showEvent(currentEvent);
+    }
+  }
   }
 
   // Create event element with optional typewriter effect
@@ -485,10 +510,48 @@ class MatchDataPanel {
     return icons[type] || '📝';
   }
 
+  // Show field visualization
+  showFieldVisualization() {
+    // Initialize field visualization if not already done
+    if (!this.fieldVisualization) {
+      this.fieldVisualization = new FieldVisualization();
+    }
+
+    // Create the field with match data
+    this.fieldVisualization.createField(this.matchData);
+
+    // Add close button to field
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'field-close-btn';
+    closeBtn.innerHTML = '✕';
+    closeBtn.addEventListener('click', () => {
+      this.fieldVisualization.removeField();
+    });
+    
+    const fieldContainer = document.getElementById('hattrick-field-container');
+    if (fieldContainer) {
+      fieldContainer.appendChild(closeBtn);
+    }
+
+    // Set example tactics (can be extracted from match data later)
+    // this.fieldVisualization.setTeamTactics('home', 'pressing');
+    // this.fieldVisualization.setTeamTactics('away', 'counter');
+
+    // If there are events, show the current event on the field
+    if (this.currentEvent) {
+      this.fieldVisualization.showEvent(this.currentEvent);
+    }
+  }
+
   // Remove the panel
   removePanel() {
     // Stop all timers before removing
     this.stopAllTimers();
+    
+    // Remove field visualization if it exists
+    if (this.fieldVisualization) {
+      this.fieldVisualization.removeField();
+    }
     
     if (this.panel && this.panel.parentNode) {
       this.panel.parentNode.removeChild(this.panel);
