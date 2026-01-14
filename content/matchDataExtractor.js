@@ -106,11 +106,17 @@ class HattrickMatchDataExtractor {
 
   // Start authentication flow via background worker
   async authenticate(consumerKey, consumerSecret) {
-    const response = await this.sendMessageToBackground({ 
-      action: 'authenticate', 
-      consumerKey: consumerKey || null,
-      consumerSecret: consumerSecret || null
-    });
+    const message = { action: 'authenticate' };
+    
+    // Only include credentials if provided
+    if (consumerKey !== null && consumerKey !== undefined) {
+      message.consumerKey = consumerKey;
+    }
+    if (consumerSecret !== null && consumerSecret !== undefined) {
+      message.consumerSecret = consumerSecret;
+    }
+    
+    const response = await this.sendMessageToBackground(message);
     
     if (!response.success) {
       throw new Error(response.error || 'Authentication failed');

@@ -1,6 +1,9 @@
 // Content script - runs on Hattrick pages
 console.log('Hattrick Matchview content script loaded');
 
+// Constants
+const SUCCESS_MESSAGE_DURATION_MS = 3000;
+
 // Import the data extractor and panel (they will be loaded via manifest)
 let dataExtractor = null;
 let dataPanel = null;
@@ -148,7 +151,6 @@ async function handleAuthentication(button) {
     button.disabled = false;
     
     // Show success message
-    const SUCCESS_MESSAGE_DURATION_MS = 3000;
     const successMsg = showTemporaryMessage('✅ Authentication successful! Click the button to view match data.', 'success');
     setTimeout(() => {
       if (successMsg && successMsg.parentNode) {
