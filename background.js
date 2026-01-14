@@ -22,6 +22,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error: error.message });
       });
     return true; // Keep channel open for async response
+  } else if (message.action === 'fetchMatchData') {
+    fetchMatchData(message.matchId)
+      .then(data => sendResponse({ success: true, data }))
+      .catch(error => {
+        console.error('Match data fetch error:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Keep channel open for async response
   }
 });
 
@@ -254,4 +262,149 @@ async function hmacSha1(message, key) {
   const signatureBase64 = btoa(String.fromCharCode.apply(null, signatureArray));
   
   return signatureBase64;
+}
+
+// Fetch match data from Hattrick CHPP API
+async function fetchMatchData(matchId) {
+  // Get stored tokens
+  const result = await chrome.storage.local.get(['accessToken', 'accessTokenSecret']);
+  
+  if (!result.accessToken || !result.accessTokenSecret) {
+    throw new Error('Not authenticated. Please connect to Hattrick first.');
+  }
+  
+  const apiUrl = `https://chpp.hattrick.org/chppxml.ashx?file=matchdetails&version=3.0&matchId=${matchId}`;
+  
+  const timestamp = Math.floor(Date.now() / 1000);
+  const nonce = generateNonce();
+  
+  const params = {
+    oauth_consumer_key: CONSUMER_KEY,
+    oauth_token: result.accessToken,
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: timestamp,
+    oauth_nonce: nonce,
+    oauth_version: '1.0'
+  };
+  
+  const signature = await generateSignature('GET', apiUrl, params, CONSUMER_SECRET, result.accessTokenSecret);
+  params.oauth_signature = signature;
+  
+  const response = await fetch(apiUrl, {
+    method: 'GET',
+    headers: {
+      'Authorization': buildAuthHeader(params)
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch match data: ${response.status} ${response.statusText}`);
+  }
+  
+  const xmlText = await response.text();
+  
+  // Parse XML and convert to JSON
+  return parseMatchXML(xmlText);
+}
+
+// Parse match XML data and convert to structured JSON
+function parseMatchXML(xmlText) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+  
+  // Check for errors in the XML
+  const errorNode = xmlDoc.querySelector('Error');
+  if (errorNode) {
+    throw new Error(errorNode.textContent || 'Unknown error from API');
+  }
+  
+  // Extract match data
+  const match = xmlDoc.querySelector('Match');
+  if (!match) {
+    throw new Error('No match data found in response');
+  }
+  
+  // Helper function to get text content safely
+  const getText = (element, selector, defaultValue = '') => {
+    const node = element.querySelector(selector);
+    return node ? node.textContent : defaultValue;
+  };
+  
+  // Helper function to get all child elements as an array of objects
+  const getElements = (element, selector) => {
+    const nodes = element.querySelectorAll(selector);
+    return Array.from(nodes);
+  };
+  
+  const matchData = {
+    matchId: getText(match, 'MatchID'),
+    matchType: getText(match, 'MatchType'),
+    matchDate: getText(match, 'MatchDate'),
+    finishedDate: getText(match, 'FinishedDate'),
+    status: getText(match, 'Status'),
+    
+    homeTeam: {
+      teamId: getText(match, 'HomeTeam > HomeTeamID'),
+      teamName: getText(match, 'HomeTeam > HomeTeamName'),
+      dressMRI: getText(match, 'HomeTeam > DressURI'),
+      formation: getText(match, 'HomeTeam > Formation'),
+      tacticType: getText(match, 'HomeTeam > TacticType'),
+      tacticSkill: getText(match, 'HomeTeam > TacticSkill'),
+      ratingMidfield: getText(match, 'HomeTeam > RatingMidfield'),
+      ratingRightDef: getText(match, 'HomeTeam > RatingRightDef'),
+      ratingMidDef: getText(match, 'HomeTeam > RatingMidDef'),
+      ratingLeftDef: getText(match, 'HomeTeam > RatingLeftDef'),
+      ratingRightAtt: getText(match, 'HomeTeam > RatingRightAtt'),
+      ratingMidAtt: getText(match, 'HomeTeam > RatingMidAtt'),
+      ratingLeftAtt: getText(match, 'HomeTeam > RatingLeftAtt')
+    },
+    
+    awayTeam: {
+      teamId: getText(match, 'AwayTeam > AwayTeamID'),
+      teamName: getText(match, 'AwayTeam > AwayTeamName'),
+      dressURI: getText(match, 'AwayTeam > DressURI'),
+      formation: getText(match, 'AwayTeam > Formation'),
+      tacticType: getText(match, 'AwayTeam > TacticType'),
+      tacticSkill: getText(match, 'AwayTeam > TacticSkill'),
+      ratingMidfield: getText(match, 'AwayTeam > RatingMidfield'),
+      ratingRightDef: getText(match, 'AwayTeam > RatingRightDef'),
+      ratingMidDef: getText(match, 'AwayTeam > RatingMidDef'),
+      ratingLeftDef: getText(match, 'AwayTeam > RatingLeftDef'),
+      ratingRightAtt: getText(match, 'AwayTeam > RatingRightAtt'),
+      ratingMidAtt: getText(match, 'AwayTeam > RatingMidAtt'),
+      ratingLeftAtt: getText(match, 'AwayTeam > RatingLeftAtt')
+    },
+    
+    arena: {
+      arenaId: getText(match, 'Arena > ArenaID'),
+      arenaName: getText(match, 'Arena > ArenaName'),
+      weatherId: getText(match, 'Arena > WeatherID'),
+      soldTotal: getText(match, 'Arena > SoldTotal')
+    },
+    
+    scoreboard: {
+      homeGoals: getText(match, 'HomeTeam > Goals', '0'),
+      awayGoals: getText(match, 'AwayTeam > Goals', '0')
+    },
+    
+    // Parse events (goals, cards, injuries, etc.)
+    events: getElements(match, 'Scoreboard > Goal').map(goal => ({
+      type: 'goal',
+      minute: getText(goal, 'Minute'),
+      matchPart: getText(goal, 'MatchPart'),
+      subjectTeamId: getText(goal, 'SubjectTeamID'),
+      subjectPlayerId: getText(goal, 'SubjectPlayerID'),
+      subjectPlayerName: getText(goal, 'SubjectPlayerName'),
+      objectPlayerId: getText(goal, 'ObjectPlayerID'),
+      objectPlayerName: getText(goal, 'ObjectPlayerName')
+    })),
+    
+    // Additional data
+    possessionFirstHalfHome: getText(match, 'PossessionFirstHalfHome'),
+    possessionFirstHalfAway: getText(match, 'PossessionFirstHalfAway'),
+    possessionSecondHalfHome: getText(match, 'PossessionSecondHalfHome'),
+    possessionSecondHalfAway: getText(match, 'PossessionSecondHalfAway')
+  };
+  
+  return matchData;
 }
