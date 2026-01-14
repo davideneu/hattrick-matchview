@@ -11,23 +11,54 @@ document.addEventListener('DOMContentLoaded', async () => {
   attachEventListeners();
 });
 
-// Helper: Send message to background worker
-async function sendMessageToBackground(message) {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(message, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
+// Helper: Send message to background worker with retry logic
+async function sendMessageToBackground(message, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await new Promise((resolve, reject) => {
+        // Add a timeout to detect hanging requests
+        const timeout = setTimeout(() => {
+          reject(new Error('Message timeout - background service worker may be inactive'));
+        }, 5000);
+        
+        chrome.runtime.sendMessage(message, (response) => {
+          clearTimeout(timeout);
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (response == null) {
+            // Check for both null and undefined
+            reject(new Error('No response from background service worker'));
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      
+      return response;
+    } catch (error) {
+      console.error(`Attempt ${attempt}/${retries} failed:`, error);
+      
+      if (attempt < retries) {
+        // Wait before retrying (exponential backoff with max delay cap)
+        const delay = Math.min(Math.pow(2, attempt - 1) * 500, 5000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        console.log(`Retrying... (attempt ${attempt + 1}/${retries})`);
       } else {
-        resolve(response);
+        // All retries failed
+        throw new Error(`Failed to communicate with background service worker after ${retries} attempts. Please try reloading the extension.`);
       }
-    });
-  });
+    }
+  }
 }
 
 // Check authentication status
 async function checkAuthStatus() {
   const statusIcon = document.getElementById('status-icon');
   const statusText = document.getElementById('status-text');
+  
+  // Show loading state
+  statusIcon.textContent = '🔄';
+  statusText.textContent = 'Checking authentication...';
   
   try {
     const response = await sendMessageToBackground({ action: 'checkAuthentication' });
@@ -42,7 +73,7 @@ async function checkAuthStatus() {
   } catch (error) {
     console.error('Error checking auth status:', error);
     statusIcon.textContent = '🔴';
-    statusText.textContent = 'Error checking authentication status';
+    statusText.textContent = `Error: ${error.message}`;
   }
 }
 
