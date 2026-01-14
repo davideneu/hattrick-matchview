@@ -25,36 +25,25 @@
       <section class="api-config">
         <h2>CHPP API Configuration</h2>
         <div class="info-box">
-          <p><strong>Quick Start:</strong> Leave the fields empty and click "Authenticate" to use default test credentials!</p>
-          <p><strong>Custom Credentials:</strong> To use your own CHPP API credentials:</p>
+          <p><strong>Quick Start:</strong> Click "Authenticate" below to connect with Hattrick CHPP API using secure OAuth!</p>
+          <p>The extension uses default test credentials for quick setup. You can also use your custom credentials if needed.</p>
+          <p><strong>To use custom credentials:</strong></p>
           <ol>
             <li>Go to <a href="https://www.hattrick.org/Community/CHPP/" target="_blank">Hattrick CHPP</a></li>
             <li>Register a new application</li>
             <li>Get your Consumer Key and Consumer Secret</li>
-            <li>Enter them below and click "Authenticate"</li>
+            <li>Contact support to configure custom credentials</li>
           </ol>
         </div>
 
-        <form id="api-config-form">
-          <div class="form-group">
-            <label for="consumer-key">Consumer Key (optional - leave empty for default):</label>
-            <input type="text" id="consumer-key" placeholder="Leave empty to use test credentials" />
-          </div>
-
-          <div class="form-group">
-            <label for="consumer-secret">Consumer Secret (optional - leave empty for default):</label>
-            <input type="password" id="consumer-secret" placeholder="Leave empty to use test credentials" />
-          </div>
-
-          <div class="button-group">
-            <button type="submit" id="authenticate-btn" class="btn btn-primary">
-              🔐 Authenticate with Hattrick
-            </button>
-            <button type="button" id="clear-auth-btn" class="btn btn-secondary">
-              🗑️ Clear Authentication
-            </button>
-          </div>
-        </form>
+        <div class="button-group">
+          <button type="button" id="authenticate-btn" class="btn btn-primary">
+            🔐 Authenticate with Hattrick
+          </button>
+          <button type="button" id="clear-auth-btn" class="btn btn-secondary">
+            🗑️ Clear Authentication
+          </button>
+        </div>
       </section>
 
       <section class="fallback-mode">

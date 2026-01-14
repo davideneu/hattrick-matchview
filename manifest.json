@@ -29,7 +29,6 @@
     {
       "matches": ["https://*.hattrick.org/*"],
       "js": [
-        "api/chppApiClient.js",
         "content/matchDataExtractor.js",
         "content/fieldVisualization.js",
         "content/matchDataPanel.js",
