@@ -273,7 +273,12 @@ async function fetchMatchData(matchId) {
     throw new Error('Not authenticated. Please connect to Hattrick first.');
   }
   
-  const apiUrl = `https://chpp.hattrick.org/chppxml.ashx?file=matchdetails&version=3.0&matchId=${matchId}`;
+  // Validate matchId to prevent URL injection
+  if (!matchId || !/^\d+$/.test(matchId)) {
+    throw new Error('Invalid match ID format');
+  }
+  
+  const apiUrl = `https://chpp.hattrick.org/chppxml.ashx?file=matchdetails&version=3.0&matchId=${encodeURIComponent(matchId)}`;
   
   const timestamp = Math.floor(Date.now() / 1000);
   const nonce = generateNonce();

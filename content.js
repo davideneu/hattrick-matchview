@@ -325,6 +325,12 @@ function displayMatchData(data) {
 
 // Show loading message
 function showLoading() {
+  // Remove any existing container
+  const existingContainer = document.getElementById('hattrick-match-view-container');
+  if (existingContainer) {
+    existingContainer.remove();
+  }
+  
   const container = document.createElement('div');
   container.id = 'hattrick-match-view-container';
   container.innerHTML = '<div class="loading-message">Loading match data from Hattrick API...</div>';
