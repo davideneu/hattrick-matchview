@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Test - Overlay Button and Side Pane</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      overflow-x: hidden;
+    }
+    
+    .page-header {
+      background: #2563eb;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .page-content {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    h2 {
+      font-size: 20px;
+      color: #333;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+    
+    p {
+      line-height: 1.6;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    
+    /* Overlay Button Styles */
+    #hattrick-match-view-overlay {
+      position: fixed;
+      top: 100px;
+      right: 0;
+      z-index: 10000;
+    }
+    
+    .hattrick-overlay-button {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      border-radius: 8px 0 0 8px;
+      padding: 12px 16px;
+      cursor: pointer;
+      box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .hattrick-overlay-button:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      transform: translateX(-5px);
+      box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .hattrick-overlay-button .icon {
+      font-size: 20px;
+    }
+    
+    /* Side Pane Styles */
+    #hattrick-match-view-sidepane {
+      position: fixed;
+      top: 0;
+      right: -500px;
+      width: 500px;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+      z-index: 10001;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+    }
+    
+    #hattrick-match-view-sidepane.open {
+      right: 0;
+    }
+    
+    .sidepane-header {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+    
+    .sidepane-header h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .close-button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .close-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .sidepane-content {
+      padding: 20px;
+    }
+    
+    .demo-section {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .demo-section h3 {
+      color: #92400e;
+      margin-bottom: 10px;
+    }
+    
+    .demo-section p {
+      color: #78350f;
+      margin-bottom: 10px;
+    }
+    
+    .feature-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    
+    .feature-list li {
+      padding: 10px;
+      margin: 5px 0;
+      background: #f3f4f6;
+      border-radius: 4px;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .feature-list li::before {
+      content: "✓ ";
+      color: #22c55e;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>Hattrick Match Page (Simulated)</h1>
+    <p>This page simulates a Hattrick match page to demonstrate the overlay button and side pane</p>
+  </div>
+  
+  <div class="page-content">
+    <h2>Match Details</h2>
+    <p>This is where the normal Hattrick match page content would appear.</p>
+    
+    <div class="demo-section">
+      <h3>🎯 What to Look For</h3>
+      <p><strong>Look at the right side of your screen!</strong> You should see a blue "Match Data" button.</p>
+      <p>Click it to open the side pane with match data.</p>
+    </div>
+    
+    <h2>Features Implemented</h2>
+    <ul class="feature-list">
+      <li><strong>Overlay Button:</strong> Fixed position button on the right side, visible only when authenticated</li>
+      <li><strong>Authentication Check:</strong> Button only appears if user is connected to Hattrick</li>
+      <li><strong>Side Pane:</strong> 500px wide panel that slides in from the right</li>
+      <li><strong>Toggle Functionality:</strong> Click button to open/close the side pane</li>
+      <li><strong>Match Data Display:</strong> Shows comprehensive match information in the side pane</li>
+      <li><strong>Smooth Animations:</strong> Slide-in transition and hover effects</li>
+    </ul>
+    
+    <h2>User Flow</h2>
+    <ol style="padding-left: 20px; line-height: 2;">
+      <li>User visits a Hattrick match page</li>
+      <li>If authenticated, overlay button appears on the right side</li>
+      <li>User clicks the "Match Data" button</li>
+      <li>Side pane slides in from the right with match data</li>
+      <li>User can close it by clicking the X button in the header</li>
+      <li>Button remains visible for reopening</li>
+    </ol>
+  </div>
+  
+  <!-- Overlay Button -->
+  <div id="hattrick-match-view-overlay">
+    <button id="hattrick-match-view-toggle" class="hattrick-overlay-button" onclick="toggleSidePane()">
+      <span class="icon">📊</span>
+      <span class="text">Match Data</span>
+    </button>
+  </div>
+  
+  <!-- Side Pane -->
+  <div id="hattrick-match-view-sidepane">
+    <div class="sidepane-header">
+      <h2>Match Data</h2>
+      <button id="hattrick-sidepane-close" class="close-button" onclick="toggleSidePane()">✕</button>
+    </div>
+    <div class="sidepane-content">
+      <div style="background: #e0e7ff; color: #1e40af; padding: 15px; border-radius: 6px; border: 2px solid #3b82f6; text-align: center;">
+        <strong>Demo Mode</strong><br>
+        In the actual extension, this area will display:<br>
+        • Match score and details<br>
+        • Team formations and tactics<br>
+        • Arena information<br>
+        • Possession statistics<br>
+        • Goal events<br>
+      </div>
+      
+      <div style="margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 6px;">
+        <h3 style="color: #3b82f6; font-size: 16px; margin-bottom: 10px;">Sample Data Display</h3>
+        <p style="font-size: 13px;"><strong>Match ID:</strong> 76084062</p>
+        <p style="font-size: 13px;"><strong>Match Type:</strong> League Match</p>
+        <p style="font-size: 13px;"><strong>Status:</strong> Finished</p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function toggleSidePane() {
+      const sidePane = document.getElementById('hattrick-match-view-sidepane');
+      sidePane.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>

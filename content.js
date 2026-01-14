@@ -119,6 +119,11 @@ function formatMatchData(data) {
 
 // Create overlay button
 function createOverlayButton() {
+  // Check if overlay already exists
+  if (document.getElementById('hattrick-match-view-overlay')) {
+    return;
+  }
+  
   const overlay = document.createElement('div');
   overlay.id = 'hattrick-match-view-overlay';
   overlay.innerHTML = `
@@ -175,6 +180,11 @@ function createOverlayButton() {
 
 // Create side pane
 function createSidePane() {
+  // Check if side pane already exists
+  if (document.getElementById('hattrick-match-view-sidepane')) {
+    return;
+  }
+  
   const sidePane = document.createElement('div');
   sidePane.id = 'hattrick-match-view-sidepane';
   sidePane.innerHTML = `
@@ -437,10 +447,16 @@ function toggleSidePane() {
   const sidePane = document.getElementById('hattrick-match-view-sidepane');
   if (!sidePane) {
     createSidePane();
-    setTimeout(() => {
-      document.getElementById('hattrick-match-view-sidepane').classList.add('open');
-      loadMatchData();
-    }, 10);
+    // Use requestAnimationFrame for smoother animation
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const pane = document.getElementById('hattrick-match-view-sidepane');
+        if (pane) {
+          pane.classList.add('open');
+          loadMatchData();
+        }
+      });
+    });
   } else {
     sidePane.classList.toggle('open');
     if (sidePane.classList.contains('open') && !sidePane.dataset.loaded) {
