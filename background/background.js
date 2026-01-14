@@ -66,14 +66,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Handle authentication flow
   if (request.action === 'authenticate') {
     const { consumerKey, consumerSecret } = request;
+    
+    // Keep service worker alive during OAuth flow (which can take a long time)
+    // This prevents the service worker from being terminated while user is authenticating
+    const keepAliveInterval = setInterval(() => {
+      console.log('Keeping service worker alive during OAuth...');
+    }, 20000); // Ping every 20 seconds (well under the 30s termination threshold)
+    
     initializeAPIClient().then(client => {
       // If consumerKey/Secret are null, use defaults
       const key = consumerKey || client.defaultConsumerKey;
       const secret = consumerSecret || client.defaultConsumerSecret;
       return client.authenticate(key, secret);
     }).then(() => {
+      clearInterval(keepAliveInterval);
       sendResponse({ success: true });
     }).catch(error => {
+      clearInterval(keepAliveInterval);
       console.error('Authentication failed:', error);
       sendResponse({ success: false, error: error.message });
     });
