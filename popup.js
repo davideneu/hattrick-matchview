@@ -59,6 +59,11 @@ async function initiateAuth() {
     // Send message to background script to start OAuth flow
     const response = await chrome.runtime.sendMessage({ action: 'startAuth' });
     
+    if (!response) {
+      showStatus('error', 'Failed to communicate with background script');
+      return;
+    }
+    
     if (response.success) {
       showStatus('connected', null, response.userInfo);
     } else {

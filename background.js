@@ -1,5 +1,10 @@
 // background.js - Service worker for OAuth authentication
 
+// OAuth credentials for Hattrick CHPP API
+// Note: In OAuth 1.0a client-side implementations (like Chrome extensions), the consumer
+// secret must be included in the code for signing requests. The secret is used ONLY for
+// generating signatures and is never sent directly in requests. This is a standard practice
+// for browser extensions and is acceptable per OAuth 1.0a specifications.
 const CONSUMER_KEY = 'SNbqfVnQkV9IkrMhbGAqae';
 const CONSUMER_SECRET = 'EriFMHbmnnKG9HT3YL7Y9LANP7ziJtaHWnpJqSeFLsH';
 const REQUEST_TOKEN_URL = 'https://chpp.hattrick.org/oauth/request_token.ashx';
