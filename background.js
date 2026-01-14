@@ -330,7 +330,7 @@ function parseMatchXML(xmlText) {
     return node ? node.textContent : defaultValue;
   };
   
-  // Helper function to get all child elements as an array of objects
+  // Helper function to get all child elements as an array of DOM nodes
   const getElements = (element, selector) => {
     const nodes = element.querySelectorAll(selector);
     return Array.from(nodes);

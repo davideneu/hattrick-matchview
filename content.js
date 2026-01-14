@@ -94,15 +94,17 @@ function formatMatchData(data) {
       
       <div class="possession-stats">
         <h3>Possession</h3>
-        <div class="possession-half">
-          <h4>First Half</h4>
-          <p><strong>Home:</strong> ${escapeHtml(data.possessionFirstHalfHome)}%</p>
-          <p><strong>Away:</strong> ${escapeHtml(data.possessionFirstHalfAway)}%</p>
-        </div>
-        <div class="possession-half">
-          <h4>Second Half</h4>
-          <p><strong>Home:</strong> ${escapeHtml(data.possessionSecondHalfHome)}%</p>
-          <p><strong>Away:</strong> ${escapeHtml(data.possessionSecondHalfAway)}%</p>
+        <div class="possession-container">
+          <div class="possession-half">
+            <h4>First Half</h4>
+            <p><strong>Home:</strong> ${escapeHtml(data.possessionFirstHalfHome)}%</p>
+            <p><strong>Away:</strong> ${escapeHtml(data.possessionFirstHalfAway)}%</p>
+          </div>
+          <div class="possession-half">
+            <h4>Second Half</h4>
+            <p><strong>Home:</strong> ${escapeHtml(data.possessionSecondHalfHome)}%</p>
+            <p><strong>Away:</strong> ${escapeHtml(data.possessionSecondHalfAway)}%</p>
+          </div>
         </div>
       </div>
       
@@ -243,6 +245,13 @@ function displayMatchData(data) {
       padding: 15px;
       border-radius: 6px;
       margin-bottom: 15px;
+    }
+    
+    .possession-stats h3 {
+      margin-top: 0;
+    }
+    
+    .possession-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 15px;
@@ -300,7 +309,7 @@ function displayMatchData(data) {
         grid-template-columns: 1fr;
       }
       
-      .possession-stats {
+      .possession-container {
         grid-template-columns: 1fr;
       }
     }
