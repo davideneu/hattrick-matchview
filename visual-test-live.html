@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Test - Live Match Support</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      overflow-x: hidden;
+    }
+    
+    .page-header {
+      background: #2563eb;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .page-content {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    h2 {
+      font-size: 20px;
+      color: #333;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+    
+    p {
+      line-height: 1.6;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    
+    .url-box {
+      background: #f0f9ff;
+      border: 2px solid #3b82f6;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 20px 0;
+      font-family: 'Courier New', monospace;
+      word-break: break-all;
+    }
+    
+    .feature-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    
+    .feature-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .feature-list li:before {
+      content: "✓ ";
+      color: #22c55e;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    
+    .note-box {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    
+    .note-box strong {
+      color: #92400e;
+    }
+    
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    
+    .demo-button {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 24px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 10px 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+    }
+    
+    .demo-button:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>🔴 Live Match Support - Visual Test</h1>
+    <p>Testing the new Live.aspx page support for Hattrick Match View extension</p>
+  </div>
+
+  <div class="page-content">
+    <h2>Overview</h2>
+    <p>
+      This page demonstrates the new live match support added to the Hattrick Match View extension.
+      The extension now works on both finished match pages (Match.aspx) and live match pages (Live.aspx).
+    </p>
+
+    <h2>New Features</h2>
+    <ul class="feature-list">
+      <li>Support for Live.aspx pages in manifest.json content scripts</li>
+      <li>Automatic detection of page type (Live vs Match)</li>
+      <li>New <code>fetchLiveMatchData</code> function using htlive API (version 1.4)</li>
+      <li>Parser for live match XML response structure (Team, MatchList)</li>
+      <li>Support for viewAll and viewNew action types</li>
+      <li>Display of live/upcoming/finished match statuses</li>
+      <li>Visual styling for different match states (ongoing/upcoming/finished)</li>
+    </ul>
+
+    <h2>URL Structure</h2>
+    <p>The extension now recognizes live match pages with the following URL structure:</p>
+    <div class="url-box">
+      https://www85.hattrick.org/Club/Matches/Live.aspx?matchID=760840624
+    </div>
+    <p>And continues to support finished match pages:</p>
+    <div class="url-box">
+      https://www85.hattrick.org/Club/Matches/Match.aspx?matchID=760840624
+    </div>
+
+    <h2>API Endpoints</h2>
+    <p><strong>Live Matches:</strong> Uses the <code>htlive</code> file (version 1.4) from CHPP API</p>
+    <ul class="feature-list">
+      <li>Action type: viewAll (first request) or viewNew (subsequent requests)</li>
+      <li>Returns Team information and MatchList</li>
+      <li>Supports lastShownIndexes parameter for incremental updates</li>
+    </ul>
+    
+    <p><strong>Finished Matches:</strong> Uses the <code>matchdetails</code> file (version 3.1) from CHPP API</p>
+    <ul class="feature-list">
+      <li>Returns detailed match information including ratings, events, and possession</li>
+    </ul>
+
+    <h2>Display Features</h2>
+    <p>The live match display includes:</p>
+    <ul class="feature-list">
+      <li>Team information (name, league, level)</li>
+      <li>Match status badges (ONGOING, UPCOMING, FINISHED)</li>
+      <li>Current score for each match</li>
+      <li>Match type and date</li>
+      <li>Orders given status (for your own upcoming matches)</li>
+      <li>Color-coded styling based on match status</li>
+    </ul>
+
+    <div class="note-box">
+      <strong>Note:</strong> The htlive API returns a list of all live and upcoming matches for a team,
+      not just a single match. The extension displays all matches in the list with appropriate styling
+      for each status (ongoing, upcoming, or finished).
+    </div>
+
+    <h2>Testing Instructions</h2>
+    <ol style="padding-left: 20px; line-height: 1.8;">
+      <li>Load the extension in Chrome (chrome://extensions/)</li>
+      <li>Authenticate with your Hattrick account via the extension popup</li>
+      <li>Navigate to a Live.aspx page: <code>https://www85.hattrick.org/Club/Matches/Live.aspx?matchID=YOUR_MATCH_ID</code></li>
+      <li>Click the "Match Data" button on the right side of the page</li>
+      <li>Verify that the live match data is displayed correctly</li>
+      <li>Check that match status badges are colored appropriately</li>
+      <li>Verify Dev Mode still works for viewing raw XML</li>
+    </ol>
+
+    <h2>Technical Implementation</h2>
+    <p><strong>Files Modified:</strong></p>
+    <ul class="feature-list">
+      <li><code>manifest.json</code> - Added Live.aspx to content_scripts matches</li>
+      <li><code>background.js</code> - Added fetchLiveMatchData function with OAuth signing</li>
+      <li><code>content.js</code> - Added isLiveMatchPage, parseLiveMatchXML, and formatLiveMatchData functions</li>
+    </ul>
+
+    <h2>Security Considerations</h2>
+    <ul class="feature-list">
+      <li>OAuth 1.0a signing properly implemented for htlive API</li>
+      <li>Match ID validation to prevent URL injection</li>
+      <li>Action type validation (viewAll/viewNew only)</li>
+      <li>HTML escaping in display functions to prevent XSS</li>
+    </ul>
+
+    <h2>Demo Buttons</h2>
+    <p>Click the buttons below to simulate different scenarios (for development testing):</p>
+    <button class="demo-button" onclick="alert('Navigate to:\nhttps://www85.hattrick.org/Club/Matches/Live.aspx?matchID=760840624')">
+      Open Live Match Page
+    </button>
+    <button class="demo-button" onclick="alert('Navigate to:\nhttps://www85.hattrick.org/Club/Matches/Match.aspx?matchID=760840624')">
+      Open Finished Match Page
+    </button>
+  </div>
+
+  <script>
+    console.log('Visual Test - Live Match Support loaded');
+    console.log('Extension should detect Live.aspx pages and use htlive API');
+    console.log('Extension should detect Match.aspx pages and use matchdetails API');
+  </script>
+</body>
+</html>
