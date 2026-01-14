@@ -333,7 +333,11 @@ function showLoading() {
   
   const container = document.createElement('div');
   container.id = 'hattrick-match-view-container';
-  container.innerHTML = '<div class="loading-message">Loading match data from Hattrick API...</div>';
+  
+  const message = document.createElement('div');
+  message.className = 'loading-message';
+  message.textContent = 'Loading match data from Hattrick API...';
+  container.appendChild(message);
   
   const mainContent = getMainContent();
   if (mainContent) {
