@@ -1,18 +1,17 @@
 // Match Data Extractor for Hattrick
-// Fetches match information from the Hattrick CHPP API
+// Fetches match information from the Hattrick CHPP API via background service worker
 
 class HattrickMatchDataExtractor {
   constructor() {
     this.matchData = null;
-    this.apiClient = new CHPPApiClient();
   }
 
   // Initialize the extractor
   async initialize() {
-    // Initialize the API client with credentials
-    const isAuthenticated = await this.apiClient.initialize();
-    console.log(`CHPP API initialized: ${isAuthenticated ? 'authenticated' : 'not authenticated, needs OAuth flow'}`);
-    return isAuthenticated;
+    // Check authentication status via background worker
+    const response = await this.sendMessageToBackground({ action: 'checkAuthentication' });
+    console.log(`CHPP API initialized: ${response.authenticated ? 'authenticated' : 'not authenticated, needs OAuth flow'}`);
+    return response.authenticated;
   }
 
   // Main extraction function
@@ -25,7 +24,7 @@ class HattrickMatchDataExtractor {
       throw new Error('Could not extract match ID from URL');
     }
 
-    // Fetch data from API
+    // Fetch data from API via background worker
     const matchData = await this.extractFromAPI(matchId);
     
     this.matchData = matchData;
@@ -33,16 +32,36 @@ class HattrickMatchDataExtractor {
     return matchData;
   }
 
-  // Extract data from CHPP API
+  // Extract data from CHPP API via background worker
   async extractFromAPI(matchId) {
-    // Fetch match details and events in parallel
-    const [matchDetails, liveEvents] = await Promise.all([
-      this.apiClient.getMatchDetails(matchId),
-      this.apiClient.getLiveMatchEvents(matchId).catch(err => {
-        console.warn('Could not fetch live events:', err);
-        return [];
-      })
+    // Fetch match details (required) and events (optional, may fail) in parallel via background
+    const results = await Promise.allSettled([
+      this.sendMessageToBackground({ action: 'getMatchDetails', matchId }),
+      this.sendMessageToBackground({ action: 'getLiveMatchEvents', matchId })
     ]);
+
+    // Handle match details (must succeed)
+    const matchDetailsResult = results[0];
+    if (matchDetailsResult.status === 'rejected' || !matchDetailsResult.value.success) {
+      const error = matchDetailsResult.status === 'rejected' 
+        ? matchDetailsResult.reason.message 
+        : matchDetailsResult.value.error;
+      throw new Error(error || 'Failed to fetch match details');
+    }
+
+    // Handle live events (optional, can fail gracefully)
+    const liveEventsResult = results[1];
+    let liveEvents = [];
+    if (liveEventsResult.status === 'fulfilled' && liveEventsResult.value.success) {
+      liveEvents = liveEventsResult.value.data;
+    } else {
+      const error = liveEventsResult.status === 'rejected'
+        ? liveEventsResult.reason.message
+        : liveEventsResult.value.error;
+      console.warn('Could not fetch live events:', error);
+    }
+
+    const matchDetails = matchDetailsResult.value.data;
 
     // Merge the data
     return {
@@ -52,6 +71,19 @@ class HattrickMatchDataExtractor {
       stats: matchDetails.stats,
       events: liveEvents
     };
+  }
+
+  // Helper: Send message to background worker
+  async sendMessageToBackground(message) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve(response);
+        }
+      });
+    });
   }
 
   // Helper: Extract match ID from URL
@@ -67,12 +99,29 @@ class HattrickMatchDataExtractor {
   }
 
   // Check if API is available
-  isAPIAvailable() {
-    return this.apiClient.isAuthenticated();
+  async isAPIAvailable() {
+    const response = await this.sendMessageToBackground({ action: 'checkAuthentication' });
+    return response.authenticated;
   }
 
-  // Get API client for authentication management
-  getAPIClient() {
-    return this.apiClient;
+  // Start authentication flow via background worker
+  async authenticate(consumerKey, consumerSecret) {
+    const message = { action: 'authenticate' };
+    
+    // Only include credentials if provided
+    if (consumerKey !== null && consumerKey !== undefined) {
+      message.consumerKey = consumerKey;
+    }
+    if (consumerSecret !== null && consumerSecret !== undefined) {
+      message.consumerSecret = consumerSecret;
+    }
+    
+    const response = await this.sendMessageToBackground(message);
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Authentication failed');
+    }
+    
+    return true;
   }
 }

@@ -1,6 +1,9 @@
 // Content script - runs on Hattrick pages
 console.log('Hattrick Matchview content script loaded');
 
+// Constants
+const SUCCESS_MESSAGE_DURATION_MS = 3000;
+
 // Import the data extractor and panel (they will be loaded via manifest)
 let dataExtractor = null;
 let dataPanel = null;
@@ -77,10 +80,19 @@ function addExtensionIndicator() {
 }
 
 // Add a button to fetch and display match data
-function addDataFetchButton() {
+async function addDataFetchButton() {
   const button = document.createElement('button');
   button.id = 'hattrick-fetch-data-btn';
-  button.textContent = '📊 Show Match Data';
+  
+  // Check authentication status to determine button text
+  const isAuthenticated = await dataExtractor.isAPIAvailable();
+  
+  if (isAuthenticated) {
+    button.textContent = '📊 Show Match Data';
+  } else {
+    button.textContent = '🔐 Authenticate with Hattrick';
+  }
+  
   button.style.cssText = `
     position: fixed;
     bottom: 20px;
@@ -109,11 +121,53 @@ function addDataFetchButton() {
     button.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
   });
   
-  button.addEventListener('click', () => {
-    fetchAndDisplayMatchData();
+  button.addEventListener('click', async () => {
+    const currentlyAuthenticated = await dataExtractor.isAPIAvailable();
+    if (currentlyAuthenticated) {
+      fetchAndDisplayMatchData();
+    } else {
+      // Start authentication flow
+      await handleAuthentication(button);
+    }
   });
   
   document.body.appendChild(button);
+}
+
+// Handle authentication flow
+async function handleAuthentication(button) {
+  console.log('Starting authentication flow...');
+  
+  const originalText = button.textContent;
+  button.textContent = '🔄 Authenticating...';
+  button.disabled = true;
+  
+  try {
+    // Use default credentials (null for both means use defaults)
+    await dataExtractor.authenticate(null, null);
+    
+    // Success - update button
+    button.textContent = '📊 Show Match Data';
+    button.disabled = false;
+    
+    // Show success message
+    const successMsg = showTemporaryMessage('✅ Authentication successful! Click the button to view match data.', 'success');
+    setTimeout(() => {
+      if (successMsg && successMsg.parentNode) {
+        successMsg.parentNode.removeChild(successMsg);
+      }
+    }, SUCCESS_MESSAGE_DURATION_MS);
+    
+  } catch (error) {
+    console.error('Authentication failed:', error);
+    
+    // Reset button
+    button.textContent = originalText;
+    button.disabled = false;
+    
+    // Show error
+    alert('Authentication failed: ' + error.message + '\n\nPlease try again or check the Settings page.');
+  }
 }
 
 // Fetch and display match data
@@ -182,6 +236,51 @@ function showLoadingMessage(message) {
   document.body.appendChild(loadingDiv);
   
   return loadingDiv;
+}
+
+// Show temporary message
+function showTemporaryMessage(message, type = 'info') {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'hattrick-temp-msg';
+  messageDiv.textContent = message;
+  
+  const bgColor = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#667eea';
+  
+  messageDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${bgColor};
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 10001;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    animation: slideDown 0.3s ease-out;
+  `;
+  
+  // Add animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideDown {
+      from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+      }
+      to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  document.body.appendChild(messageDiv);
+  
+  return messageDiv;
 }
 
 // Initialize when DOM is ready

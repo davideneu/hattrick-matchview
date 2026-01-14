@@ -1,12 +1,8 @@
 // Settings page JavaScript
-let apiClient = null;
 
 // Initialize settings page
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Settings page loaded');
-  
-  // Create API client instance
-  apiClient = new CHPPApiClient();
   
   // Check current authentication status
   await checkAuthStatus();
@@ -15,28 +11,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   attachEventListeners();
 });
 
+// Helper: Send message to background worker
+async function sendMessageToBackground(message) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(response);
+      }
+    });
+  });
+}
+
 // Check authentication status
 async function checkAuthStatus() {
   const statusIcon = document.getElementById('status-icon');
   const statusText = document.getElementById('status-text');
   
   try {
-    const isAuthenticated = await apiClient.initialize();
+    const response = await sendMessageToBackground({ action: 'checkAuthentication' });
     
-    if (isAuthenticated) {
+    if (response.authenticated) {
       statusIcon.textContent = '🟢';
-      statusText.textContent = `Authenticated - Using CHPP API ${apiClient.isUsingDefaultCredentials() ? '(Default Credentials)' : '(User Credentials)'}`;
-      
-      // Load and display current credentials (masked)
-      const credentials = await apiClient.loadCredentials();
-      if (credentials) {
-        document.getElementById('consumer-key').value = maskCredential(credentials.consumerKey);
-        document.getElementById('consumer-secret').value = maskCredential(credentials.consumerSecret);
-      } else if (apiClient.isUsingDefaultCredentials()) {
-        // Show masked default credentials
-        document.getElementById('consumer-key').value = maskCredential(apiClient.defaultConsumerKey);
-        document.getElementById('consumer-secret').value = maskCredential(apiClient.defaultConsumerSecret);
-      }
+      statusText.textContent = `Authenticated - Using CHPP API ${response.usingDefault ? '(Default Credentials)' : '(User Credentials)'}`;
     } else {
       statusIcon.textContent = '🟡';
       statusText.textContent = 'Ready to Authenticate - Click "Authenticate" below';
@@ -48,18 +46,10 @@ async function checkAuthStatus() {
   }
 }
 
-// Mask credential for display
-function maskCredential(credential) {
-  if (!credential) return '';
-  if (credential.length <= 8) return '***';
-  return credential.substring(0, 4) + '***' + credential.substring(credential.length - 4);
-}
-
 // Attach event listeners
 function attachEventListeners() {
-  // Authentication form
-  document.getElementById('api-config-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // Authentication button
+  document.getElementById('authenticate-btn').addEventListener('click', async () => {
     await handleAuthenticate();
   });
   
@@ -71,21 +61,11 @@ function attachEventListeners() {
 
 // Handle authentication
 async function handleAuthenticate() {
-  let consumerKey = document.getElementById('consumer-key').value.trim();
-  let consumerSecret = document.getElementById('consumer-secret').value.trim();
   const authenticateBtn = document.getElementById('authenticate-btn');
   const statusIcon = document.getElementById('status-icon');
   const statusText = document.getElementById('status-text');
   
-  // If fields are empty or masked, use default credentials
-  if (!consumerKey || consumerKey.includes('***')) {
-    consumerKey = apiClient.defaultConsumerKey;
-    consumerSecret = apiClient.defaultConsumerSecret;
-    console.log('Using default credentials for authentication');
-  } else if (!consumerSecret || consumerSecret.includes('***')) {
-    alert('Please enter both Consumer Key and Consumer Secret, or leave both empty to use default credentials');
-    return;
-  }
+  console.log('Using default credentials for authentication');
   
   // Disable button and show progress
   authenticateBtn.disabled = true;
@@ -94,16 +74,22 @@ async function handleAuthenticate() {
   statusText.textContent = 'Starting OAuth authentication...';
   
   try {
-    // Start OAuth flow
-    await apiClient.authenticate(consumerKey, consumerSecret);
+    // Start OAuth flow via background worker (omit credentials to use defaults)
+    const response = await sendMessageToBackground({ 
+      action: 'authenticate'
+      // consumerKey and consumerSecret are omitted, background will use defaults
+    });
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Authentication failed');
+    }
     
     // Success
     statusIcon.textContent = '🟢';
     statusText.textContent = 'Authentication successful!';
     
     // Show success message
-    const usingDefault = (consumerKey === apiClient.defaultConsumerKey);
-    alert(`Successfully authenticated with Hattrick CHPP API!\n\n${usingDefault ? 'Using default credentials for testing.' : 'Using your custom credentials.'}\n\nThe extension will now use the API to fetch match data.`);
+    alert('Successfully authenticated with Hattrick CHPP API!\n\nUsing default credentials for testing.\n\nThe extension will now use the API to fetch match data.');
     
     // Reload auth status
     await checkAuthStatus();
@@ -115,7 +101,7 @@ async function handleAuthenticate() {
     statusIcon.textContent = '🔴';
     statusText.textContent = `Authentication failed: ${error.message}`;
     
-    alert(`Authentication failed:\n${error.message}\n\nPlease check your credentials and try again.`);
+    alert(`Authentication failed:\n${error.message}\n\nPlease try again.`);
     
   } finally {
     // Re-enable button
@@ -134,20 +120,20 @@ async function handleClearAuth() {
   const statusText = document.getElementById('status-text');
   
   try {
-    await apiClient.clearCredentials();
+    const response = await sendMessageToBackground({ action: 'clearCredentials' });
     
-    // Clear form fields
-    document.getElementById('consumer-key').value = '';
-    document.getElementById('consumer-secret').value = '';
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to clear credentials');
+    }
     
     // Update status
     statusIcon.textContent = '🟡';
     statusText.textContent = 'Authentication cleared - Ready to re-authenticate';
     
-    alert('Authentication cleared successfully.\n\nClick "Authenticate" to re-authenticate (or leave fields empty to use default credentials).');
+    alert('Authentication cleared successfully.\n\nClick "Authenticate" to re-authenticate.');
     
   } catch (error) {
     console.error('Error clearing authentication:', error);
-    alert(`Error clearing authentication:\n${error.message}`);
+    alert(`Error clearing authentication:\n${error.message || 'Unknown error occurred'}`);
   }
 }

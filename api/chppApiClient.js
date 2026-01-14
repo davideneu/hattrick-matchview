@@ -514,10 +514,6 @@ class CHPPApiClient {
     this.accessToken = null;
     this.accessTokenSecret = null;
     
-    return new Promise((resolve) => {
-      chrome.storage.local.remove(['chppCredentials'], () => {
-        resolve();
-      });
-    });
+    return chrome.storage.local.remove(['chppCredentials']);
   }
 }
