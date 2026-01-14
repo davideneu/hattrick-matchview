@@ -5,7 +5,9 @@ class CHPPApiClient {
   constructor() {
     this.baseUrl = 'https://chpp.hattrick.org';
     this.xmlBaseUrl = 'https://www.hattrick.org/chppxml';
-    // Default credentials for testing (users can override in settings)
+    // Default test credentials provided by the user for quick setup
+    // NOTE: These are intentionally included for testing purposes
+    // Users can override with their own credentials via the settings page
     this.defaultConsumerKey = 'SNbqfVnQkV9IkrMhbGAqae';
     this.defaultConsumerSecret = 'EriFMHbmnnKG9HT3YL7Y9LANP7ziJtaHWnpJqSeFLsH';
     this.consumerKey = null;
