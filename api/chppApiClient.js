@@ -494,16 +494,28 @@ class CHPPApiClient {
     console.log(`Found ${playerNodes.length} players for ${teamType}`);
 
     playerNodes.forEach(node => {
+      const playerName = this.getXMLValue(node, 'PlayerName');
+      const firstName = this.getXMLValue(node, 'FirstName');
+      const lastName = this.getXMLValue(node, 'LastName');
+      
+      // Build name: prefer PlayerName, fallback to FirstName + LastName
+      let name = playerName;
+      if (!name && firstName && lastName) {
+        name = `${firstName} ${lastName}`.trim();
+      } else if (!name && (firstName || lastName)) {
+        // If only one part is available, use it
+        name = (firstName || lastName).trim();
+      }
+      
       const playerData = {
         id: this.getXMLValue(node, 'PlayerID'),
-        name: this.getXMLValue(node, 'PlayerName') || 
-              this.getXMLValue(node, 'FirstName') + ' ' + this.getXMLValue(node, 'LastName'),
+        name: name,
         roleId: this.getXMLValue(node, 'RoleID'),
         behaviour: this.getXMLValue(node, 'Behaviour')
       };
       
-      // Only add if we have at least a name
-      if (playerData.name && playerData.name !== 'null null') {
+      // Only add if we have at least a valid name and ID
+      if (playerData.name && playerData.name.length > 0 && playerData.id) {
         players.push(playerData);
       }
     });
