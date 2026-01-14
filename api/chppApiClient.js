@@ -230,6 +230,9 @@ class CHPPApiClient {
 
   // Make authenticated API request
   async makeAuthenticatedRequest(method, url, params = {}) {
+    console.log(`Making ${method} request to:`, url);
+    console.log('Request params:', params);
+
     const oauthParams = {
       oauth_consumer_key: this.consumerKey,
       oauth_token: this.accessToken,
@@ -242,6 +245,8 @@ class CHPPApiClient {
     // Build full URL with query params
     const queryString = new URLSearchParams(params).toString();
     const fullUrl = queryString ? `${url}?${queryString}` : url;
+
+    console.log('Full URL:', fullUrl);
 
     // Generate signature (include query params)
     const signature = await this.generateSignature(method, url, 
@@ -257,11 +262,18 @@ class CHPPApiClient {
       }
     });
 
+    console.log('Response status:', response.status, response.statusText);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API error response:', errorText);
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    return await response.text();
+    const responseText = await response.text();
+    console.log('Response received, length:', responseText.length);
+    
+    return responseText;
   }
 
   // Generate OAuth signature (HMAC-SHA1)
@@ -347,30 +359,39 @@ class CHPPApiClient {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
+    // Log the raw XML for debugging
+    console.log('Parsing matchdetails XML response...');
+    console.log('XML length:', xmlText.length);
+
     // Check for errors
     const error = xmlDoc.querySelector('Error');
     if (error) {
       throw new Error(`API Error: ${error.textContent}`);
     }
 
-    // Extract match information
+    // Extract match information - paths based on CHPP API structure
     const matchData = {
       matchInfo: {
         matchId: this.getXMLValue(xmlDoc, 'MatchID'),
         date: this.getXMLValue(xmlDoc, 'MatchDate'),
         type: this.getXMLValue(xmlDoc, 'MatchType'),
-        arena: this.getXMLValue(xmlDoc, 'Arena > ArenaName')
+        // ArenaName is a direct child of Arena element
+        arena: this.getXMLValue(xmlDoc, 'Arena ArenaName')
       },
       teams: {
         home: {
-          name: this.getXMLValue(xmlDoc, 'HomeTeam > HomeTeamName'),
-          id: this.getXMLValue(xmlDoc, 'HomeTeam > HomeTeamID'),
-          score: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam > HomeGoals') || '0')
+          // HomeTeamName and HomeTeamID are direct children of HomeTeam
+          name: this.getXMLValue(xmlDoc, 'HomeTeam HomeTeamName'),
+          id: this.getXMLValue(xmlDoc, 'HomeTeam HomeTeamID'),
+          // HomeGoals is a direct child of Match, not HomeTeam
+          score: parseInt(this.getXMLValue(xmlDoc, 'HomeGoals') || '0')
         },
         away: {
-          name: this.getXMLValue(xmlDoc, 'AwayTeam > AwayTeamName'),
-          id: this.getXMLValue(xmlDoc, 'AwayTeam > AwayTeamID'),
-          score: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam > AwayGoals') || '0')
+          // AwayTeamName and AwayTeamID are direct children of AwayTeam
+          name: this.getXMLValue(xmlDoc, 'AwayTeam AwayTeamName'),
+          id: this.getXMLValue(xmlDoc, 'AwayTeam AwayTeamID'),
+          // AwayGoals is a direct child of Match, not AwayTeam
+          score: parseInt(this.getXMLValue(xmlDoc, 'AwayGoals') || '0')
         }
       },
       players: {
@@ -379,8 +400,11 @@ class CHPPApiClient {
       },
       stats: {
         possession: {
-          home: parseInt(this.getXMLValue(xmlDoc, 'PossessionFirstHalfHome') || '0'),
-          away: parseInt(this.getXMLValue(xmlDoc, 'PossessionFirstHalfAway') || '0')
+          // Correct field names for possession in CHPP API
+          home: parseInt(this.getXMLValue(xmlDoc, 'PossessionFirstHalfHome') || 
+                         this.getXMLValue(xmlDoc, 'HomeTeamPossessionFirstHalf') || '0'),
+          away: parseInt(this.getXMLValue(xmlDoc, 'PossessionFirstHalfAway') || 
+                         this.getXMLValue(xmlDoc, 'AwayTeamPossessionFirstHalf') || '0')
         },
         chances: {
           home: this.countChances(xmlDoc, 'Home'),
@@ -388,27 +412,30 @@ class CHPPApiClient {
         },
         ratings: {
           home: {
-            midfield: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam > RatingMidfield') || '0'),
-            leftDef: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam > RatingLeftDef') || '0'),
-            midDef: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam > RatingMidDef') || '0'),
-            rightDef: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam > RatingRightDef') || '0'),
-            leftAtt: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam > RatingLeftAtt') || '0'),
-            midAtt: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam > RatingMidAtt') || '0'),
-            rightAtt: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam > RatingRightAtt') || '0')
+            // Rating fields are direct children of HomeTeam
+            midfield: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam RatingMidfield') || '0'),
+            leftDef: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam RatingLeftDef') || '0'),
+            midDef: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam RatingMidDef') || '0'),
+            rightDef: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam RatingRightDef') || '0'),
+            leftAtt: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam RatingLeftAtt') || '0'),
+            midAtt: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam RatingMidAtt') || '0'),
+            rightAtt: parseInt(this.getXMLValue(xmlDoc, 'HomeTeam RatingRightAtt') || '0')
           },
           away: {
-            midfield: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam > RatingMidfield') || '0'),
-            leftDef: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam > RatingLeftDef') || '0'),
-            midDef: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam > RatingMidDef') || '0'),
-            rightDef: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam > RatingRightDef') || '0'),
-            leftAtt: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam > RatingLeftAtt') || '0'),
-            midAtt: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam > RatingMidAtt') || '0'),
-            rightAtt: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam > RatingRightAtt') || '0')
+            // Rating fields are direct children of AwayTeam
+            midfield: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam RatingMidfield') || '0'),
+            leftDef: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam RatingLeftDef') || '0'),
+            midDef: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam RatingMidDef') || '0'),
+            rightDef: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam RatingRightDef') || '0'),
+            leftAtt: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam RatingLeftAtt') || '0'),
+            midAtt: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam RatingMidAtt') || '0'),
+            rightAtt: parseInt(this.getXMLValue(xmlDoc, 'AwayTeam RatingRightAtt') || '0')
           }
         }
       }
     };
 
+    console.log('Parsed match data:', matchData);
     return matchData;
   }
 
@@ -416,6 +443,9 @@ class CHPPApiClient {
   parseLiveEvents(xmlText) {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+    console.log('Parsing live events XML response...');
+    console.log('XML length:', xmlText.length);
 
     // Check for errors
     const error = xmlDoc.querySelector('Error');
@@ -426,9 +456,13 @@ class CHPPApiClient {
     const events = [];
     const eventNodes = xmlDoc.querySelectorAll('Event');
 
+    console.log(`Found ${eventNodes.length} event nodes`);
+
     eventNodes.forEach(node => {
       const minute = parseInt(this.getXMLValue(node, 'Minute') || '0');
-      const eventTypeId = parseInt(this.getXMLValue(node, 'EventTypeID') || '0');
+      // CHPP API uses EventKey, not EventTypeID
+      const eventTypeId = parseInt(this.getXMLValue(node, 'EventKey') || 
+                                   this.getXMLValue(node, 'EventTypeID') || '0');
       const eventText = this.getXMLValue(node, 'EventText');
       
       events.push({
@@ -436,26 +470,42 @@ class CHPPApiClient {
         type: this.mapEventType(eventTypeId),
         typeId: eventTypeId,
         description: eventText,
-        teamId: this.getXMLValue(node, 'TeamID'),
-        playerId: this.getXMLValue(node, 'PlayerID')
+        // These might be SubjectTeamID and SubjectPlayerID in the API
+        teamId: this.getXMLValue(node, 'SubjectTeamID') || this.getXMLValue(node, 'TeamID'),
+        playerId: this.getXMLValue(node, 'SubjectPlayerID') || this.getXMLValue(node, 'PlayerID')
       });
     });
 
+    console.log('Parsed events:', events);
     return events;
   }
 
   // Extract players from XML
   extractPlayers(xmlDoc, teamType) {
     const players = [];
-    const playerNodes = xmlDoc.querySelectorAll(`${teamType} > StartingLineup > Player`);
+    // Try both possible paths - StartingLineup and Lineup
+    let playerNodes = xmlDoc.querySelectorAll(`${teamType} StartingLineup Player`);
+    
+    // If no players found, try alternative structure
+    if (playerNodes.length === 0) {
+      playerNodes = xmlDoc.querySelectorAll(`${teamType} Lineup Player`);
+    }
+
+    console.log(`Found ${playerNodes.length} players for ${teamType}`);
 
     playerNodes.forEach(node => {
-      players.push({
+      const playerData = {
         id: this.getXMLValue(node, 'PlayerID'),
-        name: this.getXMLValue(node, 'PlayerName'),
+        name: this.getXMLValue(node, 'PlayerName') || 
+              this.getXMLValue(node, 'FirstName') + ' ' + this.getXMLValue(node, 'LastName'),
         roleId: this.getXMLValue(node, 'RoleID'),
         behaviour: this.getXMLValue(node, 'Behaviour')
-      });
+      };
+      
+      // Only add if we have at least a name
+      if (playerData.name && playerData.name !== 'null null') {
+        players.push(playerData);
+      }
     });
 
     return players;
@@ -470,7 +520,8 @@ class CHPPApiClient {
 
   // Get XML value helper
   getXMLValue(node, path) {
-    const parts = path.split(' > ');
+    // Handle both space-separated and ' > ' separated paths
+    const parts = path.includes(' > ') ? path.split(' > ') : path.split(' ').filter(p => p.length > 0);
     let current = node;
     
     for (const part of parts) {
