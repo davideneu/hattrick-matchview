@@ -346,7 +346,7 @@ function parseMatchXML(xmlText) {
     homeTeam: {
       teamId: getText(match, 'HomeTeam > HomeTeamID'),
       teamName: getText(match, 'HomeTeam > HomeTeamName'),
-      dressMRI: getText(match, 'HomeTeam > DressURI'),
+      dressURI: getText(match, 'HomeTeam > DressURI'),
       formation: getText(match, 'HomeTeam > Formation'),
       tacticType: getText(match, 'HomeTeam > TacticType'),
       tacticSkill: getText(match, 'HomeTeam > TacticSkill'),
