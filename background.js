@@ -380,8 +380,11 @@ async function fetchLiveMatchData(matchId, actionType = 'viewAll', lastShownInde
   };
   
   // Add lastShownIndexes if provided (for viewNew actionType)
+  // Store the stringified version for use in both signature and URL
+  let lastShownIndexesStr = null;
   if (lastShownIndexes && actionType === 'viewNew') {
-    params.lastShownIndexes = JSON.stringify(lastShownIndexes);
+    lastShownIndexesStr = JSON.stringify(lastShownIndexes);
+    params.lastShownIndexes = lastShownIndexesStr;
   }
   
   // Generate signature with all parameters
@@ -395,9 +398,9 @@ async function fetchLiveMatchData(matchId, actionType = 'viewAll', lastShownInde
     actionType: params.actionType
   });
   
-  // Add lastShownIndexes to URL if provided
-  if (lastShownIndexes && actionType === 'viewNew') {
-    apiParams.append('lastShownIndexes', params.lastShownIndexes);
+  // Add lastShownIndexes to URL if provided (using the same stringified value)
+  if (lastShownIndexesStr) {
+    apiParams.append('lastShownIndexes', lastShownIndexesStr);
   }
   
   const apiUrl = `${baseUrl}?${apiParams.toString()}`;
