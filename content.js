@@ -8,6 +8,11 @@ function getMatchIdFromUrl() {
   return urlParams.get('matchID');
 }
 
+// Get the main content container
+function getMainContent() {
+  return document.querySelector('#mainBody') || document.querySelector('body');
+}
+
 // Format match data as HTML
 function formatMatchData(data) {
   return `
@@ -294,7 +299,7 @@ function displayMatchData(data) {
   `;
   
   // Insert the container at the top of the main content area
-  const mainContent = document.querySelector('#mainBody') || document.querySelector('body');
+  const mainContent = getMainContent();
   if (mainContent) {
     mainContent.insertBefore(style, mainContent.firstChild);
     mainContent.insertBefore(container, mainContent.firstChild);
@@ -307,7 +312,7 @@ function showLoading() {
   container.id = 'hattrick-match-view-container';
   container.innerHTML = '<div class="loading-message">Loading match data from Hattrick API...</div>';
   
-  const mainContent = document.querySelector('#mainBody') || document.querySelector('body');
+  const mainContent = getMainContent();
   if (mainContent) {
     mainContent.insertBefore(container, mainContent.firstChild);
   }
@@ -324,7 +329,7 @@ function showError(message) {
   container.id = 'hattrick-match-view-container';
   container.innerHTML = `<div class="error-message"><strong>Error:</strong> ${message}</div>`;
   
-  const mainContent = document.querySelector('#mainBody') || document.querySelector('body');
+  const mainContent = getMainContent();
   if (mainContent) {
     mainContent.insertBefore(container, mainContent.firstChild);
   }
