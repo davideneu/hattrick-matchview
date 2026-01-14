@@ -16,12 +16,23 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Decode HTML entities in text (for EventText which may contain &amp;, &quot;, etc.)
+// Decode HTML entities and strip HTML tags from EventText
+// EventText contains HTML entities (&lt;, &gt;, &amp;, &#39;, &#246;, etc.)
+// and HTML tags (<a>, <span>, <br />) that need to be removed for plain text display
 function decodeHtmlEntities(text) {
-  if (text === null || text === undefined) return '';
+  if (text === null || text === undefined || text === '') return '';
+  
+  // First decode HTML entities using textarea trick
   const textarea = document.createElement('textarea');
   textarea.innerHTML = String(text);
-  return textarea.value;
+  const decoded = textarea.value;
+  
+  // Then create a div to strip HTML tags, keeping only text content
+  const div = document.createElement('div');
+  div.innerHTML = decoded;
+  
+  // Get text content and clean up extra whitespace
+  return div.textContent.replace(/\s+/g, ' ').trim();
 }
 
 // Parse match XML data and convert to structured JSON
@@ -277,18 +288,21 @@ function formatMatchData(data) {
         <div class="all-events-section">
           <h3>Match Events Timeline</h3>
           <div class="all-events-list">
-            ${data.allEvents.map(event => `
-              <div class="event-item" data-event-type="${escapeHtml(event.eventTypeID)}">
-                <div class="event-time">
-                  <span class="minute">${escapeHtml(event.minute)}'</span>
-                  ${event.matchPart === '2' ? '<span class="match-part">2H</span>' : '<span class="match-part">1H</span>'}
+            ${data.allEvents.filter(event => event.eventText && event.eventText.trim()).map(event => {
+              const eventText = decodeHtmlEntities(event.eventText);
+              return `
+                <div class="event-item" data-event-type="${escapeHtml(event.eventTypeID)}">
+                  <div class="event-time">
+                    <span class="minute">${escapeHtml(event.minute)}'</span>
+                    ${event.matchPart === '2' ? '<span class="match-part">2H</span>' : event.matchPart === '1' ? '<span class="match-part">1H</span>' : '<span class="match-part">Pre</span>'}
+                  </div>
+                  <div class="event-content">
+                    <div class="event-text">${escapeHtml(eventText)}</div>
+                    ${event.subjectPlayerName ? `<div class="event-players"><small>${escapeHtml(event.subjectPlayerName)}</small></div>` : ''}
+                  </div>
                 </div>
-                <div class="event-content">
-                  <div class="event-text">${escapeHtml(decodeHtmlEntities(event.eventText))}</div>
-                  ${event.subjectPlayerName ? `<div class="event-players"><small>${escapeHtml(event.subjectPlayerName)}</small></div>` : ''}
-                </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         </div>
       ` : ''}
