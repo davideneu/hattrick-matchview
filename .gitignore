@@ -24,3 +24,6 @@ Thumbs.db
 
 # Test files (but allow tests directory)
 # test-*.html
+
+# Demo files
+match-demo.html
