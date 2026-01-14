@@ -13,6 +13,14 @@ function getMainContent() {
   return document.querySelector('#mainBody') || document.querySelector('body');
 }
 
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text) {
+  if (text === null || text === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(text);
+  return div.innerHTML;
+}
+
 // Format match data as HTML
 function formatMatchData(data) {
   return `
@@ -21,64 +29,64 @@ function formatMatchData(data) {
       
       <div class="match-header">
         <div class="match-meta">
-          <p><strong>Match ID:</strong> ${data.matchId}</p>
-          <p><strong>Match Type:</strong> ${data.matchType}</p>
-          <p><strong>Date:</strong> ${data.matchDate}</p>
-          <p><strong>Status:</strong> ${data.status}</p>
+          <p><strong>Match ID:</strong> ${escapeHtml(data.matchId)}</p>
+          <p><strong>Match Type:</strong> ${escapeHtml(data.matchType)}</p>
+          <p><strong>Date:</strong> ${escapeHtml(data.matchDate)}</p>
+          <p><strong>Status:</strong> ${escapeHtml(data.status)}</p>
         </div>
         
         <div class="scoreboard">
           <h3>Score</h3>
           <div class="score-display">
-            <span class="team-name">${data.homeTeam.teamName}</span>
-            <span class="score">${data.scoreboard.homeGoals} - ${data.scoreboard.awayGoals}</span>
-            <span class="team-name">${data.awayTeam.teamName}</span>
+            <span class="team-name">${escapeHtml(data.homeTeam.teamName)}</span>
+            <span class="score">${escapeHtml(data.scoreboard.homeGoals)} - ${escapeHtml(data.scoreboard.awayGoals)}</span>
+            <span class="team-name">${escapeHtml(data.awayTeam.teamName)}</span>
           </div>
         </div>
       </div>
       
       <div class="arena-info">
         <h3>Arena</h3>
-        <p><strong>Name:</strong> ${data.arena.arenaName}</p>
-        <p><strong>Attendance:</strong> ${data.arena.soldTotal}</p>
-        <p><strong>Weather ID:</strong> ${data.arena.weatherId}</p>
+        <p><strong>Name:</strong> ${escapeHtml(data.arena.arenaName)}</p>
+        <p><strong>Attendance:</strong> ${escapeHtml(data.arena.soldTotal)}</p>
+        <p><strong>Weather ID:</strong> ${escapeHtml(data.arena.weatherId)}</p>
       </div>
       
       <div class="teams-container">
         <div class="team-section home-team">
-          <h3>${data.homeTeam.teamName} (Home)</h3>
+          <h3>${escapeHtml(data.homeTeam.teamName)} (Home)</h3>
           <div class="team-stats">
-            <p><strong>Team ID:</strong> ${data.homeTeam.teamId}</p>
-            <p><strong>Formation:</strong> ${data.homeTeam.formation}</p>
-            <p><strong>Tactic:</strong> ${data.homeTeam.tacticType} (Skill: ${data.homeTeam.tacticSkill})</p>
+            <p><strong>Team ID:</strong> ${escapeHtml(data.homeTeam.teamId)}</p>
+            <p><strong>Formation:</strong> ${escapeHtml(data.homeTeam.formation)}</p>
+            <p><strong>Tactic:</strong> ${escapeHtml(data.homeTeam.tacticType)} (Skill: ${escapeHtml(data.homeTeam.tacticSkill)})</p>
             <h4>Ratings</h4>
             <ul>
-              <li><strong>Midfield:</strong> ${data.homeTeam.ratingMidfield}</li>
-              <li><strong>Right Defense:</strong> ${data.homeTeam.ratingRightDef}</li>
-              <li><strong>Mid Defense:</strong> ${data.homeTeam.ratingMidDef}</li>
-              <li><strong>Left Defense:</strong> ${data.homeTeam.ratingLeftDef}</li>
-              <li><strong>Right Attack:</strong> ${data.homeTeam.ratingRightAtt}</li>
-              <li><strong>Mid Attack:</strong> ${data.homeTeam.ratingMidAtt}</li>
-              <li><strong>Left Attack:</strong> ${data.homeTeam.ratingLeftAtt}</li>
+              <li><strong>Midfield:</strong> ${escapeHtml(data.homeTeam.ratingMidfield)}</li>
+              <li><strong>Right Defense:</strong> ${escapeHtml(data.homeTeam.ratingRightDef)}</li>
+              <li><strong>Mid Defense:</strong> ${escapeHtml(data.homeTeam.ratingMidDef)}</li>
+              <li><strong>Left Defense:</strong> ${escapeHtml(data.homeTeam.ratingLeftDef)}</li>
+              <li><strong>Right Attack:</strong> ${escapeHtml(data.homeTeam.ratingRightAtt)}</li>
+              <li><strong>Mid Attack:</strong> ${escapeHtml(data.homeTeam.ratingMidAtt)}</li>
+              <li><strong>Left Attack:</strong> ${escapeHtml(data.homeTeam.ratingLeftAtt)}</li>
             </ul>
           </div>
         </div>
         
         <div class="team-section away-team">
-          <h3>${data.awayTeam.teamName} (Away)</h3>
+          <h3>${escapeHtml(data.awayTeam.teamName)} (Away)</h3>
           <div class="team-stats">
-            <p><strong>Team ID:</strong> ${data.awayTeam.teamId}</p>
-            <p><strong>Formation:</strong> ${data.awayTeam.formation}</p>
-            <p><strong>Tactic:</strong> ${data.awayTeam.tacticType} (Skill: ${data.awayTeam.tacticSkill})</p>
+            <p><strong>Team ID:</strong> ${escapeHtml(data.awayTeam.teamId)}</p>
+            <p><strong>Formation:</strong> ${escapeHtml(data.awayTeam.formation)}</p>
+            <p><strong>Tactic:</strong> ${escapeHtml(data.awayTeam.tacticType)} (Skill: ${escapeHtml(data.awayTeam.tacticSkill)})</p>
             <h4>Ratings</h4>
             <ul>
-              <li><strong>Midfield:</strong> ${data.awayTeam.ratingMidfield}</li>
-              <li><strong>Right Defense:</strong> ${data.awayTeam.ratingRightDef}</li>
-              <li><strong>Mid Defense:</strong> ${data.awayTeam.ratingMidDef}</li>
-              <li><strong>Left Defense:</strong> ${data.awayTeam.ratingLeftDef}</li>
-              <li><strong>Right Attack:</strong> ${data.awayTeam.ratingRightAtt}</li>
-              <li><strong>Mid Attack:</strong> ${data.awayTeam.ratingMidAtt}</li>
-              <li><strong>Left Attack:</strong> ${data.awayTeam.ratingLeftAtt}</li>
+              <li><strong>Midfield:</strong> ${escapeHtml(data.awayTeam.ratingMidfield)}</li>
+              <li><strong>Right Defense:</strong> ${escapeHtml(data.awayTeam.ratingRightDef)}</li>
+              <li><strong>Mid Defense:</strong> ${escapeHtml(data.awayTeam.ratingMidDef)}</li>
+              <li><strong>Left Defense:</strong> ${escapeHtml(data.awayTeam.ratingLeftDef)}</li>
+              <li><strong>Right Attack:</strong> ${escapeHtml(data.awayTeam.ratingRightAtt)}</li>
+              <li><strong>Mid Attack:</strong> ${escapeHtml(data.awayTeam.ratingMidAtt)}</li>
+              <li><strong>Left Attack:</strong> ${escapeHtml(data.awayTeam.ratingLeftAtt)}</li>
             </ul>
           </div>
         </div>
@@ -88,13 +96,13 @@ function formatMatchData(data) {
         <h3>Possession</h3>
         <div class="possession-half">
           <h4>First Half</h4>
-          <p><strong>Home:</strong> ${data.possessionFirstHalfHome}%</p>
-          <p><strong>Away:</strong> ${data.possessionFirstHalfAway}%</p>
+          <p><strong>Home:</strong> ${escapeHtml(data.possessionFirstHalfHome)}%</p>
+          <p><strong>Away:</strong> ${escapeHtml(data.possessionFirstHalfAway)}%</p>
         </div>
         <div class="possession-half">
           <h4>Second Half</h4>
-          <p><strong>Home:</strong> ${data.possessionSecondHalfHome}%</p>
-          <p><strong>Away:</strong> ${data.possessionSecondHalfAway}%</p>
+          <p><strong>Home:</strong> ${escapeHtml(data.possessionSecondHalfHome)}%</p>
+          <p><strong>Away:</strong> ${escapeHtml(data.possessionSecondHalfAway)}%</p>
         </div>
       </div>
       
@@ -104,9 +112,9 @@ function formatMatchData(data) {
           <ul class="events-list">
             ${data.events.map(event => `
               <li>
-                <strong>Minute ${event.minute}:</strong> 
-                ${event.subjectPlayerName} 
-                ${event.objectPlayerName ? `(assisted by ${event.objectPlayerName})` : ''}
+                <strong>Minute ${escapeHtml(event.minute)}:</strong> 
+                ${escapeHtml(event.subjectPlayerName)} 
+                ${event.objectPlayerName ? `(assisted by ${escapeHtml(event.objectPlayerName)})` : ''}
               </li>
             `).join('')}
           </ul>
