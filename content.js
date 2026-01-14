@@ -21,7 +21,13 @@ function parseMatchXML(xmlText) {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
   
-  // Check for errors in the XML
+  // Check for XML parsing errors
+  const parseError = xmlDoc.querySelector('parsererror');
+  if (parseError) {
+    throw new Error('Invalid XML format: ' + parseError.textContent);
+  }
+  
+  // Check for API errors in the XML
   const errorNode = xmlDoc.querySelector('Error');
   if (errorNode) {
     throw new Error(errorNode.textContent || 'Unknown error from API');
@@ -658,9 +664,19 @@ async function loadMatchData() {
         contentDiv.innerHTML = formatRawXML(response.data);
       } else {
         // In normal mode, parse and format the data
-        const parsedData = parseMatchXML(response.data);
-        console.log('Match data parsed:', parsedData);
-        contentDiv.innerHTML = formatMatchData(parsedData);
+        try {
+          const parsedData = parseMatchXML(response.data);
+          console.log('Match data parsed:', parsedData);
+          contentDiv.innerHTML = formatMatchData(parsedData);
+        } catch (parseError) {
+          console.error('XML parsing error:', parseError);
+          contentDiv.innerHTML = `<div class="error-message">
+            <strong>XML Parsing Error:</strong> ${escapeHtml(parseError.message)}
+            <br><br>
+            <small>Tip: Enable "Dev Mode" in the extension popup to view the raw XML response.</small>
+          </div>`;
+          return;
+        }
       }
       
       sidePane.dataset.loaded = 'true';
