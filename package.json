@@ -1,8 +1,0 @@
-{
-  "name": "hattrick-matchview",
-  "version": "1.0.0",
-  "description": "Hattrick Matchview is a visualization layer for following matches of the online game Hattrick using CHPP API.",
-  "keywords": ["hattrick", "match", "visualization", "chpp", "api"],
-  "author": "",
-  "license": "ISC"
-}
