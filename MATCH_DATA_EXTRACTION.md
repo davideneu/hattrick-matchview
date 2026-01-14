@@ -1,5 +1,7 @@
 # Match Data Extraction - Feature Documentation
 
+> **⚠️ OUTDATED**: This document describes the old DOM parsing approach. The extension now uses CHPP API exclusively. See [CHPP_API_INTEGRATION.md](CHPP_API_INTEGRATION.md) for current implementation.
+
 ## Overview
 
 This update adds match data extraction and visualization capabilities to the Hattrick Matchview extension. The extension can now parse and display match information directly from Hattrick match pages.
