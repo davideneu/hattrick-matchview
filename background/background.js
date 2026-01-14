@@ -2,12 +2,9 @@
 console.log('Hattrick Matchview background service worker loaded');
 
 // Import API client using importScripts (path relative to extension root)
-try {
-  importScripts('api/chppApiClient.js');
-  console.log('CHPP API client imported successfully');
-} catch (error) {
-  console.error('Failed to import CHPP API client:', error);
-}
+// In Manifest V3, importScripts must be at top level and will throw if it fails
+importScripts('api/chppApiClient.js');
+console.log('CHPP API client imported successfully');
 
 // Initialize API client for background context
 let apiClient = null;
@@ -16,9 +13,11 @@ let apiClient = null;
 async function initializeAPIClient() {
   try {
     if (!apiClient) {
-      // We need to instantiate CHPPApiClient in the background
-      // Since service workers can't import from content scripts directly,
-      // we'll need to have it available here
+      // Check if CHPPApiClient is available
+      if (typeof CHPPApiClient === 'undefined') {
+        throw new Error('CHPPApiClient is not defined. Make sure api/chppApiClient.js is loaded correctly.');
+      }
+      
       console.log('Initializing CHPP API client...');
       apiClient = new CHPPApiClient();
       await apiClient.initialize();
