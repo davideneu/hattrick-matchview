@@ -1,0 +1,17 @@
+{
+  "name": "hattrick-matchview",
+  "version": "1.0.0",
+  "description": "Chrome extension for enhanced match viewing experience on Hattrick.org",
+  "author": "davideneu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davideneu/hattrick-matchview.git"
+  },
+  "keywords": [
+    "chrome-extension",
+    "hattrick",
+    "oauth",
+    "match-view"
+  ]
+}

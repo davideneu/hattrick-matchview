@@ -86,7 +86,7 @@ async function getRequestToken() {
     oauth_callback: CALLBACK_URL
   };
   
-  const signature = generateSignature('POST', REQUEST_TOKEN_URL, params, CONSUMER_SECRET, '');
+  const signature = await generateSignature('POST', REQUEST_TOKEN_URL, params, CONSUMER_SECRET, '');
   params.oauth_signature = signature;
   
   const response = await fetch(REQUEST_TOKEN_URL, {
@@ -154,7 +154,7 @@ async function getAccessToken(requestToken, requestTokenSecret, verifier) {
     oauth_verifier: verifier
   };
   
-  const signature = generateSignature('POST', ACCESS_TOKEN_URL, params, CONSUMER_SECRET, requestTokenSecret);
+  const signature = await generateSignature('POST', ACCESS_TOKEN_URL, params, CONSUMER_SECRET, requestTokenSecret);
   params.oauth_signature = signature;
   
   const response = await fetch(ACCESS_TOKEN_URL, {
@@ -177,7 +177,7 @@ async function getAccessToken(requestToken, requestTokenSecret, verifier) {
   };
 }
 
-function generateSignature(method, url, params, consumerSecret, tokenSecret) {
+async function generateSignature(method, url, params, consumerSecret, tokenSecret) {
   // Sort parameters
   const sortedParams = Object.keys(params)
     .sort()
@@ -195,7 +195,7 @@ function generateSignature(method, url, params, consumerSecret, tokenSecret) {
   const signingKey = `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(tokenSecret)}`;
   
   // Generate HMAC-SHA1 signature
-  return hmacSha1(signatureBaseString, signingKey);
+  return await hmacSha1(signatureBaseString, signingKey);
 }
 
 function buildAuthHeader(params) {
