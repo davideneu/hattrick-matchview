@@ -1,12 +1,8 @@
 // Settings page JavaScript
-let apiClient = null;
 
 // Initialize settings page
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Settings page loaded');
-  
-  // Create API client instance
-  apiClient = new CHPPApiClient();
   
   // Check current authentication status
   await checkAuthStatus();
@@ -15,17 +11,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   attachEventListeners();
 });
 
+// Helper: Send message to background worker
+async function sendMessageToBackground(message) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(response);
+      }
+    });
+  });
+}
+
 // Check authentication status
 async function checkAuthStatus() {
   const statusIcon = document.getElementById('status-icon');
   const statusText = document.getElementById('status-text');
   
   try {
-    const isAuthenticated = await apiClient.initialize();
+    const response = await sendMessageToBackground({ action: 'checkAuthentication' });
     
-    if (isAuthenticated) {
+    if (response.authenticated) {
       statusIcon.textContent = '🟢';
-      statusText.textContent = `Authenticated - Using CHPP API ${apiClient.isUsingDefaultCredentials() ? '(Default Credentials)' : '(User Credentials)'}`;
+      statusText.textContent = `Authenticated - Using CHPP API ${response.usingDefault ? '(Default Credentials)' : '(User Credentials)'}`;
     } else {
       statusIcon.textContent = '🟡';
       statusText.textContent = 'Ready to Authenticate - Click "Authenticate" below';
@@ -56,10 +65,6 @@ async function handleAuthenticate() {
   const statusIcon = document.getElementById('status-icon');
   const statusText = document.getElementById('status-text');
   
-  // Use default credentials
-  const consumerKey = apiClient.defaultConsumerKey;
-  const consumerSecret = apiClient.defaultConsumerSecret;
-  
   console.log('Using default credentials for authentication');
   
   // Disable button and show progress
@@ -69,8 +74,16 @@ async function handleAuthenticate() {
   statusText.textContent = 'Starting OAuth authentication...';
   
   try {
-    // Start OAuth flow
-    await apiClient.authenticate(consumerKey, consumerSecret);
+    // Start OAuth flow via background worker (null values = use defaults)
+    const response = await sendMessageToBackground({ 
+      action: 'authenticate',
+      consumerKey: null,
+      consumerSecret: null
+    });
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Authentication failed');
+    }
     
     // Success
     statusIcon.textContent = '🟢';
@@ -108,7 +121,11 @@ async function handleClearAuth() {
   const statusText = document.getElementById('status-text');
   
   try {
-    await apiClient.clearCredentials();
+    const response = await sendMessageToBackground({ action: 'clearCredentials' });
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to clear credentials');
+    }
     
     // Update status
     statusIcon.textContent = '🟡';

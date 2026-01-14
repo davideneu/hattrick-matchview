@@ -2,7 +2,7 @@
 console.log('Hattrick Matchview background service worker loaded');
 
 // Import API client using importScripts (path relative to extension root)
-importScripts('/api/chppApiClient.js');
+importScripts('api/chppApiClient.js');
 
 // Initialize API client for background context
 let apiClient = null;
@@ -97,7 +97,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   
-  return true; // Keep message channel open for async response
+  // Handle clear credentials request
+  if (request.action === 'clearCredentials') {
+    initializeAPIClient().then(client => {
+      return client.clearCredentials();
+    }).then(() => {
+      // Reset the API client instance so it reinitializes on next use
+      apiClient = null;
+      sendResponse({ success: true });
+    }).catch(error => {
+      console.error('Error clearing credentials:', error);
+      sendResponse({ success: false, error: error.message });
+    });
+    return true;
+  }
+  
+  // Only return true for unhandled messages that might need async response
+  return false;
 });
 
 // Handle tab updates to detect when user navigates to Hattrick
