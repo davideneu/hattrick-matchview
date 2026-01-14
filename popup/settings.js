@@ -135,6 +135,6 @@ async function handleClearAuth() {
     
   } catch (error) {
     console.error('Error clearing authentication:', error);
-    alert(`Error clearing authentication:\n${error.message}`);
+    alert(`Error clearing authentication:\n${error.message || 'Unknown error occurred'}`);
   }
 }

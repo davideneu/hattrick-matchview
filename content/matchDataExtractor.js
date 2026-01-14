@@ -40,7 +40,7 @@ class HattrickMatchDataExtractor {
       this.sendMessageToBackground({ action: 'getLiveMatchEvents', matchId: matchId })
         .catch(err => {
           console.warn('Could not fetch live events:', err);
-          return { success: true, data: [] };
+          return { success: false, error: err.message, data: [] };
         })
     ]);
 
