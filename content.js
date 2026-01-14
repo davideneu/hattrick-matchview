@@ -8,6 +8,11 @@ function getMatchIdFromUrl() {
   return urlParams.get('matchID');
 }
 
+// Detect if current page is a live match page
+function isLiveMatchPage() {
+  return window.location.pathname.includes('/Club/Matches/Live.aspx');
+}
+
 // Escape HTML to prevent XSS attacks
 function escapeHtml(text) {
   if (text === null || text === undefined) return '';
@@ -35,8 +40,20 @@ function decodeHtmlEntities(text) {
   return div.textContent.replace(/\s+/g, ' ').trim();
 }
 
-// Parse match XML data and convert to structured JSON
-function parseMatchXML(xmlText) {
+// Helper function to get text content safely from XML element
+function getTextFromXML(element, selector, defaultValue = '') {
+  const node = element.querySelector(selector);
+  return node ? node.textContent : defaultValue;
+}
+
+// Helper function to get all child elements as an array of DOM nodes
+function getElementsFromXML(element, selector) {
+  const nodes = element.querySelectorAll(selector);
+  return Array.from(nodes);
+}
+
+// Parse and validate XML, returning the parsed document
+function parseAndValidateXML(xmlText) {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
   
@@ -52,113 +69,162 @@ function parseMatchXML(xmlText) {
     throw new Error(errorNode.textContent || 'Unknown error from API');
   }
   
+  return xmlDoc;
+}
+
+// Parse match XML data and convert to structured JSON
+function parseMatchXML(xmlText) {
+  const xmlDoc = parseAndValidateXML(xmlText);
+  
   // Extract match data
   const match = xmlDoc.querySelector('Match');
   if (!match) {
     throw new Error('No match data found in response');
   }
   
-  // Helper function to get text content safely
-  const getText = (element, selector, defaultValue = '') => {
-    const node = element.querySelector(selector);
-    return node ? node.textContent : defaultValue;
-  };
-  
-  // Helper function to get all child elements as an array of DOM nodes
-  const getElements = (element, selector) => {
-    const nodes = element.querySelectorAll(selector);
-    return Array.from(nodes);
-  };
-  
   const matchData = {
-    matchId: getText(match, 'MatchID'),
-    matchType: getText(match, 'MatchType'),
-    matchDate: getText(match, 'MatchDate'),
-    finishedDate: getText(match, 'FinishedDate'),
-    status: getText(match, 'Status'),
+    matchId: getTextFromXML(match, 'MatchID'),
+    matchType: getTextFromXML(match, 'MatchType'),
+    matchDate: getTextFromXML(match, 'MatchDate'),
+    finishedDate: getTextFromXML(match, 'FinishedDate'),
+    status: getTextFromXML(match, 'Status'),
     
     homeTeam: {
-      teamId: getText(match, 'HomeTeam > HomeTeamID'),
-      teamName: getText(match, 'HomeTeam > HomeTeamName'),
-      dressURI: getText(match, 'HomeTeam > DressURI'),
-      formation: getText(match, 'HomeTeam > Formation'),
-      tacticType: getText(match, 'HomeTeam > TacticType'),
-      tacticSkill: getText(match, 'HomeTeam > TacticSkill'),
-      ratingMidfield: getText(match, 'HomeTeam > RatingMidfield'),
-      ratingRightDef: getText(match, 'HomeTeam > RatingRightDef'),
-      ratingMidDef: getText(match, 'HomeTeam > RatingMidDef'),
-      ratingLeftDef: getText(match, 'HomeTeam > RatingLeftDef'),
-      ratingRightAtt: getText(match, 'HomeTeam > RatingRightAtt'),
-      ratingMidAtt: getText(match, 'HomeTeam > RatingMidAtt'),
-      ratingLeftAtt: getText(match, 'HomeTeam > RatingLeftAtt')
+      teamId: getTextFromXML(match, 'HomeTeam > HomeTeamID'),
+      teamName: getTextFromXML(match, 'HomeTeam > HomeTeamName'),
+      dressURI: getTextFromXML(match, 'HomeTeam > DressURI'),
+      formation: getTextFromXML(match, 'HomeTeam > Formation'),
+      tacticType: getTextFromXML(match, 'HomeTeam > TacticType'),
+      tacticSkill: getTextFromXML(match, 'HomeTeam > TacticSkill'),
+      ratingMidfield: getTextFromXML(match, 'HomeTeam > RatingMidfield'),
+      ratingRightDef: getTextFromXML(match, 'HomeTeam > RatingRightDef'),
+      ratingMidDef: getTextFromXML(match, 'HomeTeam > RatingMidDef'),
+      ratingLeftDef: getTextFromXML(match, 'HomeTeam > RatingLeftDef'),
+      ratingRightAtt: getTextFromXML(match, 'HomeTeam > RatingRightAtt'),
+      ratingMidAtt: getTextFromXML(match, 'HomeTeam > RatingMidAtt'),
+      ratingLeftAtt: getTextFromXML(match, 'HomeTeam > RatingLeftAtt')
     },
     
     awayTeam: {
-      teamId: getText(match, 'AwayTeam > AwayTeamID'),
-      teamName: getText(match, 'AwayTeam > AwayTeamName'),
-      dressURI: getText(match, 'AwayTeam > DressURI'),
-      formation: getText(match, 'AwayTeam > Formation'),
-      tacticType: getText(match, 'AwayTeam > TacticType'),
-      tacticSkill: getText(match, 'AwayTeam > TacticSkill'),
-      ratingMidfield: getText(match, 'AwayTeam > RatingMidfield'),
-      ratingRightDef: getText(match, 'AwayTeam > RatingRightDef'),
-      ratingMidDef: getText(match, 'AwayTeam > RatingMidDef'),
-      ratingLeftDef: getText(match, 'AwayTeam > RatingLeftDef'),
-      ratingRightAtt: getText(match, 'AwayTeam > RatingRightAtt'),
-      ratingMidAtt: getText(match, 'AwayTeam > RatingMidAtt'),
-      ratingLeftAtt: getText(match, 'AwayTeam > RatingLeftAtt')
+      teamId: getTextFromXML(match, 'AwayTeam > AwayTeamID'),
+      teamName: getTextFromXML(match, 'AwayTeam > AwayTeamName'),
+      dressURI: getTextFromXML(match, 'AwayTeam > DressURI'),
+      formation: getTextFromXML(match, 'AwayTeam > Formation'),
+      tacticType: getTextFromXML(match, 'AwayTeam > TacticType'),
+      tacticSkill: getTextFromXML(match, 'AwayTeam > TacticSkill'),
+      ratingMidfield: getTextFromXML(match, 'AwayTeam > RatingMidfield'),
+      ratingRightDef: getTextFromXML(match, 'AwayTeam > RatingRightDef'),
+      ratingMidDef: getTextFromXML(match, 'AwayTeam > RatingMidDef'),
+      ratingLeftDef: getTextFromXML(match, 'AwayTeam > RatingLeftDef'),
+      ratingRightAtt: getTextFromXML(match, 'AwayTeam > RatingRightAtt'),
+      ratingMidAtt: getTextFromXML(match, 'AwayTeam > RatingMidAtt'),
+      ratingLeftAtt: getTextFromXML(match, 'AwayTeam > RatingLeftAtt')
     },
     
     arena: {
-      arenaId: getText(match, 'Arena > ArenaID'),
-      arenaName: getText(match, 'Arena > ArenaName'),
-      weatherId: getText(match, 'Arena > WeatherID'),
-      soldTotal: getText(match, 'Arena > SoldTotal')
+      arenaId: getTextFromXML(match, 'Arena > ArenaID'),
+      arenaName: getTextFromXML(match, 'Arena > ArenaName'),
+      weatherId: getTextFromXML(match, 'Arena > WeatherID'),
+      soldTotal: getTextFromXML(match, 'Arena > SoldTotal')
     },
     
     scoreboard: {
-      homeGoals: getText(match, 'HomeTeam > HomeGoals', '0'),
-      awayGoals: getText(match, 'AwayTeam > AwayGoals', '0')
+      homeGoals: getTextFromXML(match, 'HomeTeam > HomeGoals', '0'),
+      awayGoals: getTextFromXML(match, 'AwayTeam > AwayGoals', '0')
     },
     
     // Parse events (goals, cards, injuries, etc.)
-    events: getElements(match, 'Scoreboard > Goal').map(goal => ({
+    events: getElementsFromXML(match, 'Scoreboard > Goal').map(goal => ({
       type: 'goal',
-      minute: getText(goal, 'Minute'),
-      matchPart: getText(goal, 'MatchPart'),
-      subjectTeamId: getText(goal, 'SubjectTeamID'),
-      subjectPlayerId: getText(goal, 'SubjectPlayerID'),
-      subjectPlayerName: getText(goal, 'SubjectPlayerName'),
-      objectPlayerId: getText(goal, 'ObjectPlayerID'),
-      objectPlayerName: getText(goal, 'ObjectPlayerName')
+      minute: getTextFromXML(goal, 'Minute'),
+      matchPart: getTextFromXML(goal, 'MatchPart'),
+      subjectTeamId: getTextFromXML(goal, 'SubjectTeamID'),
+      subjectPlayerId: getTextFromXML(goal, 'SubjectPlayerID'),
+      subjectPlayerName: getTextFromXML(goal, 'SubjectPlayerName'),
+      objectPlayerId: getTextFromXML(goal, 'ObjectPlayerID'),
+      objectPlayerName: getTextFromXML(goal, 'ObjectPlayerName')
     })),
     
     // Parse all event list items (includes all events with EventText)
     allEvents: (() => {
-      const eventList = getElements(match, 'EventList > Event');
+      const eventList = getElementsFromXML(match, 'EventList > Event');
       return eventList.map(event => ({
-        eventIndex: getText(event, 'EventIndex'),
-        eventTypeID: getText(event, 'EventTypeID'),
-        eventVariation: getText(event, 'EventVariation'),
-        minute: getText(event, 'Minute'),
-        matchPart: getText(event, 'MatchPart'),
-        subjectTeamId: getText(event, 'SubjectTeamID'),
-        subjectPlayerId: getText(event, 'SubjectPlayerID'),
-        subjectPlayerName: getText(event, 'SubjectPlayerName'),
-        objectPlayerId: getText(event, 'ObjectPlayerID'),
-        objectPlayerName: getText(event, 'ObjectPlayerName'),
-        eventText: getText(event, 'EventText')
+        eventIndex: getTextFromXML(event, 'EventIndex'),
+        eventTypeID: getTextFromXML(event, 'EventTypeID'),
+        eventVariation: getTextFromXML(event, 'EventVariation'),
+        minute: getTextFromXML(event, 'Minute'),
+        matchPart: getTextFromXML(event, 'MatchPart'),
+        subjectTeamId: getTextFromXML(event, 'SubjectTeamID'),
+        subjectPlayerId: getTextFromXML(event, 'SubjectPlayerID'),
+        subjectPlayerName: getTextFromXML(event, 'SubjectPlayerName'),
+        objectPlayerId: getTextFromXML(event, 'ObjectPlayerID'),
+        objectPlayerName: getTextFromXML(event, 'ObjectPlayerName'),
+        eventText: getTextFromXML(event, 'EventText')
       }));
     })(),
     
     // Additional data
-    possessionFirstHalfHome: getText(match, 'PossessionFirstHalfHome'),
-    possessionFirstHalfAway: getText(match, 'PossessionFirstHalfAway'),
-    possessionSecondHalfHome: getText(match, 'PossessionSecondHalfHome'),
-    possessionSecondHalfAway: getText(match, 'PossessionSecondHalfAway')
+    possessionFirstHalfHome: getTextFromXML(match, 'PossessionFirstHalfHome'),
+    possessionFirstHalfAway: getTextFromXML(match, 'PossessionFirstHalfAway'),
+    possessionSecondHalfHome: getTextFromXML(match, 'PossessionSecondHalfHome'),
+    possessionSecondHalfAway: getTextFromXML(match, 'PossessionSecondHalfAway')
   };
   
   return matchData;
+}
+
+// Parse live match XML data and convert to structured JSON
+function parseLiveMatchXML(xmlText) {
+  const xmlDoc = parseAndValidateXML(xmlText);
+  
+  // Extract team data
+  const team = xmlDoc.querySelector('Team');
+  if (!team) {
+    throw new Error('No team data found in response');
+  }
+  
+  const teamData = {
+    teamId: getTextFromXML(team, 'TeamID'),
+    teamName: getTextFromXML(team, 'TeamName'),
+    shortTeamName: getTextFromXML(team, 'ShortTeamName'),
+    league: {
+      leagueId: getTextFromXML(team, 'League > LeagueID'),
+      leagueName: getTextFromXML(team, 'League > LeagueName'),
+      leagueLevelUnitId: getTextFromXML(team, 'League > LeagueLevelUnit > LeagueLevelUnitID'),
+      leagueLevelUnitName: getTextFromXML(team, 'League > LeagueLevelUnit > LeagueLevelUnitName'),
+      leagueLevel: getTextFromXML(team, 'League > LeagueLevelUnit > LeagueLevel')
+    }
+  };
+  
+  // Extract match list
+  const matchList = getElementsFromXML(team, 'MatchList > Match').map(match => ({
+    matchId: getTextFromXML(match, 'MatchID'),
+    homeTeam: {
+      homeTeamId: getTextFromXML(match, 'HomeTeam > HomeTeamID'),
+      homeTeamName: getTextFromXML(match, 'HomeTeam > HomeTeamName'),
+      homeTeamShortName: getTextFromXML(match, 'HomeTeam > HomeTeamShortName')
+    },
+    awayTeam: {
+      awayTeamId: getTextFromXML(match, 'AwayTeam > AwayTeamID'),
+      awayTeamName: getTextFromXML(match, 'AwayTeam > AwayTeamName'),
+      awayTeamShortName: getTextFromXML(match, 'AwayTeam > AwayTeamShortName')
+    },
+    matchDate: getTextFromXML(match, 'MatchDate'),
+    sourceSystem: getTextFromXML(match, 'SourceSystem', 'Hattrick'),
+    matchType: getTextFromXML(match, 'MatchType'),
+    matchContextId: getTextFromXML(match, 'MatchContextId'),
+    cupLevel: getTextFromXML(match, 'CupLevel'),
+    cupLevelIndex: getTextFromXML(match, 'CupLevelIndex'),
+    homeGoals: getTextFromXML(match, 'HomeGoals', '0'),
+    awayGoals: getTextFromXML(match, 'AwayGoals', '0'),
+    status: getTextFromXML(match, 'Status'),
+    ordersGiven: getTextFromXML(match, 'OrdersGiven')
+  }));
+  
+  return {
+    team: teamData,
+    matches: matchList
+  };
 }
 
 // Format raw XML for display in dev mode
@@ -306,6 +372,64 @@ function formatMatchData(data) {
           </div>
         </div>
       ` : ''}
+    </div>
+  `;
+}
+
+// Format live match data as HTML
+function formatLiveMatchData(data) {
+  // If there are no matches, show a message
+  if (!data.matches || data.matches.length === 0) {
+    return `
+      <div class="hattrick-match-data">
+        <div class="match-header">
+          <div class="match-meta">
+            <p><strong>Team:</strong> ${escapeHtml(data.team.teamName)}</p>
+            <p><strong>League:</strong> ${escapeHtml(data.team.league.leagueName)}</p>
+          </div>
+        </div>
+        <div class="info-message">
+          <p>No live or upcoming matches found for this team.</p>
+        </div>
+      </div>
+    `;
+  }
+  
+  return `
+    <div class="hattrick-match-data">
+      <div class="match-header">
+        <div class="match-meta">
+          <p><strong>Team:</strong> ${escapeHtml(data.team.teamName)}</p>
+          <p><strong>League:</strong> ${escapeHtml(data.team.league.leagueName)}</p>
+          <p><strong>Level:</strong> ${escapeHtml(data.team.league.leagueLevel)}</p>
+        </div>
+      </div>
+      
+      <div class="live-matches-section">
+        <h3>Live & Upcoming Matches</h3>
+        ${data.matches.map(match => `
+          <div class="live-match-item ${match.status.toLowerCase()}">
+            <div class="match-status-badge ${match.status.toLowerCase()}">
+              ${escapeHtml(match.status)}
+            </div>
+            <div class="match-teams">
+              <div class="team-row home-team">
+                <span class="team-name">${escapeHtml(match.homeTeam.homeTeamName)}</span>
+                <span class="team-score">${escapeHtml(match.homeGoals)}</span>
+              </div>
+              <div class="team-row away-team">
+                <span class="team-name">${escapeHtml(match.awayTeam.awayTeamName)}</span>
+                <span class="team-score">${escapeHtml(match.awayGoals)}</span>
+              </div>
+            </div>
+            <div class="match-info">
+              <p><strong>Match Type:</strong> ${escapeHtml(match.matchType)}</p>
+              <p><strong>Date:</strong> ${escapeHtml(match.matchDate)}</p>
+              ${match.ordersGiven ? `<p><strong>Orders Given:</strong> ${escapeHtml(match.ordersGiven)}</p>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
     </div>
   `;
 }
@@ -788,6 +912,114 @@ function createSidePane() {
       max-height: 70vh;
       overflow-y: auto;
     }
+    
+    /* Live Match Styles */
+    .sidepane-content .live-matches-section {
+      margin-top: 15px;
+    }
+    
+    .sidepane-content .live-match-item {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .sidepane-content .live-match-item.ongoing {
+      border-left-color: #22c55e;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    }
+    
+    .sidepane-content .live-match-item.upcoming {
+      border-left-color: #f59e0b;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    
+    .sidepane-content .live-match-item.finished {
+      border-left-color: #6b7280;
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    }
+    
+    .sidepane-content .match-status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    
+    .sidepane-content .match-status-badge.ongoing {
+      background: #22c55e;
+      color: white;
+    }
+    
+    .sidepane-content .match-status-badge.upcoming {
+      background: #f59e0b;
+      color: white;
+    }
+    
+    .sidepane-content .match-status-badge.finished {
+      background: #6b7280;
+      color: white;
+    }
+    
+    .sidepane-content .match-teams {
+      margin: 10px 0;
+    }
+    
+    .sidepane-content .team-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      margin: 5px 0;
+      background: white;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    .sidepane-content .team-row .team-name {
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    .sidepane-content .team-row .team-score {
+      font-weight: 700;
+      font-size: 18px;
+      color: #1e40af;
+      min-width: 30px;
+      text-align: right;
+    }
+    
+    .sidepane-content .match-info {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidepane-content .match-info p {
+      margin: 5px 0;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    .sidepane-content .info-message {
+      background: #e0e7ff;
+      color: #1e40af;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+      text-align: center;
+    }
+    
+    .sidepane-content .info-message p {
+      margin: 0;
+      font-size: 13px;
+    }
   `;
   
   document.head.appendChild(style);
@@ -832,12 +1064,25 @@ async function loadMatchData() {
       return;
     }
     
-    contentDiv.innerHTML = '<div class="loading-message">Loading match data from Hattrick API...</div>';
+    const isLivePage = isLiveMatchPage();
     
-    const response = await chrome.runtime.sendMessage({
-      action: 'fetchMatchData',
-      matchId: matchId
-    });
+    contentDiv.innerHTML = `<div class="loading-message">Loading ${isLivePage ? 'live' : 'match'} data from Hattrick API...</div>`;
+    
+    let response;
+    if (isLivePage) {
+      // For live matches, use the htlive API
+      response = await chrome.runtime.sendMessage({
+        action: 'fetchLiveMatchData',
+        matchId: matchId,
+        actionType: 'viewAll'
+      });
+    } else {
+      // For finished matches, use the matchdetails API
+      response = await chrome.runtime.sendMessage({
+        action: 'fetchMatchData',
+        matchId: matchId
+      });
+    }
     
     if (response.success) {
       console.log('Match data received (raw XML)');
@@ -853,9 +1098,16 @@ async function loadMatchData() {
       } else {
         // In normal mode, parse and format the data
         try {
-          const parsedData = parseMatchXML(response.data);
-          console.log('Match data parsed:', parsedData);
-          contentDiv.innerHTML = formatMatchData(parsedData);
+          let parsedData;
+          if (isLivePage) {
+            parsedData = parseLiveMatchXML(response.data);
+            console.log('Live match data parsed:', parsedData);
+            contentDiv.innerHTML = formatLiveMatchData(parsedData);
+          } else {
+            parsedData = parseMatchXML(response.data);
+            console.log('Match data parsed:', parsedData);
+            contentDiv.innerHTML = formatMatchData(parsedData);
+          }
         } catch (parseError) {
           console.error('XML parsing error:', parseError);
           contentDiv.innerHTML = formatErrorMessage('XML Parsing Error: ' + parseError.message, true);

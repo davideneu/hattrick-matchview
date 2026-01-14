@@ -10,6 +10,8 @@ A Chrome extension that enhances the match viewing experience on Hattrick.org by
   - Connected (showing success status)
   - Error (displaying error logs)
 - **Match Page Integration**: Works on all Hattrick subdomains (e.g., www85.hattrick.org, www46.hattrick.org)
+- **Live Match Support**: View live and upcoming matches on Live.aspx pages
+- **Finished Match Details**: Access detailed match information, ratings, and events on Match.aspx pages
 
 ## Installation
 
@@ -28,6 +30,10 @@ A Chrome extension that enhances the match viewing experience on Hattrick.org by
 3. You'll be redirected to Hattrick's authorization page
 4. Authorize the application
 5. You'll be redirected back and the extension will show "Connected"
+6. Navigate to a match page on Hattrick:
+   - **Live matches**: `https://www*.hattrick.org/Club/Matches/Live.aspx?matchID=...`
+   - **Finished matches**: `https://www*.hattrick.org/Club/Matches/Match.aspx?matchID=...`
+7. Click the "Match Data" button on the right side to view match information
 
 ## Files Structure
 
@@ -75,7 +81,7 @@ The extension is built using:
 
 ## Future Enhancements
 
-- Display enhanced match data on match pages
-- Real-time match updates
+- Real-time match updates with automatic polling
 - Match statistics and analysis
 - Custom match notifications
+- Enhanced event display with real-time updates
