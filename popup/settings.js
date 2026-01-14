@@ -25,7 +25,8 @@ async function sendMessageToBackground(message, retries = 3) {
           clearTimeout(timeout);
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
-          } else if (response === undefined) {
+          } else if (response == null) {
+            // Check for both null and undefined
             reject(new Error('No response from background service worker'));
           } else {
             resolve(response);
@@ -38,8 +39,8 @@ async function sendMessageToBackground(message, retries = 3) {
       console.error(`Attempt ${attempt}/${retries} failed:`, error);
       
       if (attempt < retries) {
-        // Wait before retrying (exponential backoff)
-        const delay = Math.pow(2, attempt - 1) * 500;
+        // Wait before retrying (exponential backoff with max delay cap)
+        const delay = Math.min(Math.pow(2, attempt - 1) * 500, 5000);
         await new Promise(resolve => setTimeout(resolve, delay));
         console.log(`Retrying... (attempt ${attempt + 1}/${retries})`);
       } else {
