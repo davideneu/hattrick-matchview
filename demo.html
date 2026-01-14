@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hattrick Match View - UI Demo</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    body {
+      padding: 40px;
+      background: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .demo-title {
+      text-align: center;
+      color: #1f2937;
+      margin-bottom: 40px;
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    .demo-item {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .demo-item h3 {
+      margin: 0 0 15px 0;
+      color: #374151;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .popup-wrapper {
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1 class="demo-title">Hattrick Match View Extension - UI States</h1>
+    
+    <div class="demo-grid">
+      <!-- Not Connected State -->
+      <div class="demo-item">
+        <h3>1. Not Connected State</h3>
+        <div class="popup-wrapper">
+          <div style="width: 350px; background: #f5f5f5;">
+            <div class="container">
+              <h1>Hattrick Match View</h1>
+              <div class="status-section">
+                <p class="status-message">Not connected to Hattrick</p>
+                <button class="btn btn-primary">Connect to Hattrick</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connected State -->
+      <div class="demo-item">
+        <h3>2. Connected State</h3>
+        <div class="popup-wrapper">
+          <div style="width: 350px; background: #f5f5f5;">
+            <div class="container">
+              <h1>Hattrick Match View</h1>
+              <div class="status-section">
+                <p class="status-message success">✓ Connected to Hattrick</p>
+                <p class="user-info">Successfully authenticated</p>
+                <button class="btn btn-secondary">Disconnect</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div class="demo-item">
+        <h3>3. Error State</h3>
+        <div class="popup-wrapper">
+          <div style="width: 350px; background: #f5f5f5;">
+            <div class="container">
+              <h1>Hattrick Match View</h1>
+              <div class="status-section">
+                <p class="status-message error">✗ Connection Error</p>
+                <div class="error-log">Failed to connect: Network error occurred. Please check your internet connection and try again.</div>
+                <button class="btn btn-primary">Retry Connection</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <h2 style="margin-top: 0; color: #1f2937;">About This Extension</h2>
+      <p style="color: #4b5563; line-height: 1.6;">
+        The Hattrick Match View extension provides OAuth authentication for Hattrick.org 
+        and displays enhanced match information. The extension works across all Hattrick 
+        subdomains (e.g., www85.hattrick.org, www46.hattrick.org) and includes:
+      </p>
+      <ul style="color: #4b5563; line-height: 1.8;">
+        <li><strong>OAuth 1.0a Authentication:</strong> Secure integration with Hattrick CHPP API</li>
+        <li><strong>Connection Status Display:</strong> Visual feedback for connection state</li>
+        <li><strong>Match Page Enhancement:</strong> Content script injection on match pages</li>
+        <li><strong>Subdomain Support:</strong> Works on all Hattrick subdomains</li>
+      </ul>
+      <div style="margin-top: 20px; padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+        <p style="margin: 0; color: #92400e; font-size: 14px;">
+          <strong>Note:</strong> This is a demonstration page. To use the actual extension, 
+          load it as an unpacked extension in Chrome (chrome://extensions).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

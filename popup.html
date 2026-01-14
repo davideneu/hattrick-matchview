@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hattrick Match View</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Hattrick Match View</h1>
+    <div id="status-container">
+      <!-- Status will be dynamically updated -->
+      <div id="loading" class="status-section">
+        <p>Loading...</p>
+      </div>
+      <div id="not-connected" class="status-section" style="display: none;">
+        <p class="status-message">Not connected to Hattrick</p>
+        <button id="connect-btn" class="btn btn-primary">Connect to Hattrick</button>
+      </div>
+      <div id="connected" class="status-section" style="display: none;">
+        <p class="status-message success">✓ Connected to Hattrick</p>
+        <p class="user-info" id="user-info"></p>
+        <button id="disconnect-btn" class="btn btn-secondary">Disconnect</button>
+      </div>
+      <div id="error" class="status-section" style="display: none;">
+        <p class="status-message error">✗ Connection Error</p>
+        <div id="error-log" class="error-log"></div>
+        <button id="retry-btn" class="btn btn-primary">Retry Connection</button>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
