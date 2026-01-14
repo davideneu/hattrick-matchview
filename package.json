@@ -1,18 +1,8 @@
 {
   "name": "hattrick-matchview",
   "version": "1.0.0",
-  "description": "Hattrick Matchview is a visualization layer for following matches of the online game Hattrick.",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
-  "scripts": {
-    "test": "node tests/run-tests.js"
-  },
-  "keywords": [],
+  "description": "Hattrick Matchview is a visualization layer for following matches of the online game Hattrick using CHPP API.",
+  "keywords": ["hattrick", "match", "visualization", "chpp", "api"],
   "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "jsdom": "^27.4.0"
-  }
+  "license": "ISC"
 }

@@ -4,15 +4,16 @@ This document describes the CHPP API integration added to the Hattrick Matchview
 
 ## Overview
 
-The extension has been refactored to use the **Hattrick CHPP (Community Web Projects) API** instead of DOM parsing. This provides more reliable and structured access to match data.
+The extension uses the **Hattrick CHPP (Community Web Projects) API** to access match data. This provides reliable and structured access to match information, events, and statistics.
 
 ## Key Features
 
-### 1. **API-First Approach with DOM Fallback**
+### 1. **API-Only Approach**
 
 - **Primary Method**: CHPP API (OAuth authenticated)
-- **Fallback Method**: DOM parsing (no authentication required)
-- The extension automatically falls back to DOM parsing if API authentication is not set up
+- Includes default test credentials for quick setup
+- Users can provide their own credentials for production use
+- No DOM parsing fallback
 
 ### 2. **OAuth 1.0a Authentication**
 
@@ -84,7 +85,15 @@ Provides:
 
 ### For Users
 
-#### Option 1: With CHPP API (Recommended)
+#### Quick Start (Default Credentials)
+
+1. Click the extension icon
+2. Click "⚙️ Settings"
+3. Click "🔐 Authenticate with Hattrick" (no need to enter credentials)
+4. Approve the application in the browser popup
+5. Done! The extension will now use the API
+
+#### Using Your Own Credentials
 
 1. **Register Your Application**
    - Go to [Hattrick CHPP](https://www.hattrick.org/Community/CHPP/)
@@ -98,13 +107,7 @@ Provides:
    - Enter your Consumer Key and Consumer Secret
    - Click "🔐 Authenticate with Hattrick"
    - Authorize the application in the browser popup
-   - Done! The extension will now use the API
-
-#### Option 2: Without CHPP API (Fallback)
-
-- Simply use the extension as before
-- It will automatically use DOM parsing
-- No additional setup required
+   - Done! The extension will now use your credentials
 
 ### For Developers
 
@@ -212,15 +215,14 @@ Both API and DOM parsing methods return the same data structure:
 ## Limitations
 
 ### API Limitations
-- Requires CHPP application registration
-- OAuth setup complexity for non-technical users
+- Requires OAuth authentication (simplified with default credentials)
 - API rate limits may apply (check Hattrick CHPP terms)
 
-### Fallback Mode Limitations
-- DOM structure dependent
-- May break if Hattrick changes page structure
-- Limited to visible data on page
-- Requires page to be fully loaded
+### Security Features
+- Default credentials included for testing
+- Users can override with their own credentials
+- OAuth signatures prevent request tampering
+- Tokens never exposed in logs or console (in production)
 
 ## Troubleshooting
 
@@ -243,15 +245,15 @@ Both API and DOM parsing methods return the same data structure:
 2. Re-authenticate with fresh credentials
 3. Check if CHPP application is still active
 
-### Extension Uses DOM Instead of API
+### Need to Use Different Credentials
 
-**Problem**: Extension not using API despite authentication
+**Problem**: Want to switch from default to custom credentials
 
 **Solutions**:
-1. Check authentication status in Settings
-2. Reload the extension
-3. Refresh the Hattrick page
-4. Check browser console for errors
+1. Go to Settings
+2. Clear current authentication
+3. Enter your Consumer Key and Secret
+4. Click Authenticate
 
 ## Future Enhancements
 

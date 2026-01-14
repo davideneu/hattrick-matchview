@@ -8,8 +8,9 @@ Hattrick Matchview is a visualization layer for following matches of the online 
 - ⚽ Enhanced match event display
 - 📊 Match statistics overlay
 - 🎨 Modern, intuitive interface
-- 🔌 **CHPP API integration** with automatic fallback to DOM parsing
-- 🔐 Secure OAuth authentication for API access
+- 🔌 **CHPP API integration** for reliable data access
+- 🔐 Secure OAuth authentication
+- 🚀 Quick setup with default test credentials
 
 ## Installation
 
@@ -36,20 +37,21 @@ _(Publishing to Chrome Web Store coming soon)_
 ## Usage
 
 1. Navigate to [Hattrick.org](https://www.hattrick.org)
-2. Go to any match page
-3. The extension will automatically enhance your match viewing experience
-4. Click the extension icon to see status and options
+2. Click the extension icon to open settings
+3. **Quick Start:** Click "⚙️ Settings" → "🔐 Authenticate" (uses default test credentials)
+4. Go to any match page
+5. Click "📊 Show Match Data" to see enhanced match information
 
-### Optional: CHPP API Setup (Recommended)
+### Setting Up CHPP API Access
 
-For better data reliability and more features, you can set up CHPP API access:
+The extension comes with default test credentials for quick setup. For production use or personal preferences:
 
 1. Register an application at [Hattrick CHPP](https://www.hattrick.org/Community/CHPP/)
 2. Click the extension icon → **⚙️ Settings**
-3. Enter your Consumer Key and Consumer Secret
+3. Enter your Consumer Key and Consumer Secret (or leave empty for test credentials)
 4. Click **Authenticate** and approve the application
 
-**Note**: Without API setup, the extension automatically falls back to DOM parsing mode.
+The extension uses the Hattrick CHPP API to fetch match data reliably and securely.
 
 ## Project Structure
 
@@ -89,21 +91,7 @@ This extension uses Chrome Manifest V3 (the latest standard).
 3. Click the refresh icon on the Hattrick Matchview extension
 4. Test your changes on Hattrick.org
 
-#### Running DOM Parser Tests
-
-The extension includes comprehensive tests for the DOM parsing functionality:
-
-```bash
-# Install dependencies (first time only)
-npm install
-
-# Run tests
-npm test
-```
-
-Or open `tests/test-runner.html` in a browser for an interactive test interface.
-
-See [tests/TEST_RESULTS.md](tests/TEST_RESULTS.md) for detailed test results and coverage.
+**Note:** DOM parsing tests have been removed as the extension now uses CHPP API exclusively.
 
 ## Contributing
 
