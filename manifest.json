@@ -23,7 +23,10 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://*.hattrick.org/Club/Matches/Match.aspx*"],
+      "matches": [
+        "https://*.hattrick.org/Club/Matches/Match.aspx*",
+        "https://*.hattrick.org/Club/Matches/Live.aspx*"
+      ],
       "js": ["content.js"]
     }
   ],

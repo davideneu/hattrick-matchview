@@ -30,6 +30,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error: error.message });
       });
     return true; // Keep channel open for async response
+  } else if (message.action === 'fetchLiveMatchData') {
+    fetchLiveMatchData(message.matchId, message.actionType, message.lastShownIndexes)
+      .then(data => sendResponse({ success: true, data }))
+      .catch(error => {
+        console.error('Live match data fetch error:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Keep channel open for async response
   }
 });
 
@@ -324,6 +332,85 @@ async function fetchMatchData(matchId) {
   
   if (!response.ok) {
     throw new Error(`Failed to fetch match data: ${response.status} ${response.statusText}`);
+  }
+  
+  const xmlText = await response.text();
+  
+  // Return raw XML text instead of parsing it here
+  // Parsing will be done in content.js where DOMParser is available
+  return xmlText;
+}
+
+// Fetch live match data from Hattrick HT Live API
+async function fetchLiveMatchData(matchId, actionType = 'viewAll', lastShownIndexes = null) {
+  // Get stored tokens
+  const result = await chrome.storage.local.get(['accessToken', 'accessTokenSecret']);
+  
+  if (!result.accessToken || !result.accessTokenSecret) {
+    throw new Error('Not authenticated. Please connect to Hattrick first.');
+  }
+  
+  // Validate matchId to prevent URL injection
+  if (!matchId || !/^\d+$/.test(matchId)) {
+    throw new Error('Invalid match ID format');
+  }
+  
+  // Validate actionType
+  if (!['viewAll', 'viewNew'].includes(actionType)) {
+    throw new Error('Invalid action type. Must be viewAll or viewNew.');
+  }
+  
+  // Base URL without query parameters (required for OAuth signature)
+  const baseUrl = 'https://chpp.hattrick.org/chppxml.ashx';
+  
+  const timestamp = Math.floor(Date.now() / 1000);
+  const nonce = generateNonce();
+  
+  // All parameters including API query parameters (required for OAuth signature)
+  const params = {
+    file: 'htlive',
+    version: '1.4',
+    actionType: actionType,
+    oauth_consumer_key: CONSUMER_KEY,
+    oauth_token: result.accessToken,
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: timestamp,
+    oauth_nonce: nonce,
+    oauth_version: '1.0'
+  };
+  
+  // Add lastShownIndexes if provided (for viewNew actionType)
+  if (lastShownIndexes && actionType === 'viewNew') {
+    params.lastShownIndexes = JSON.stringify(lastShownIndexes);
+  }
+  
+  // Generate signature with all parameters
+  const signature = await generateSignature('GET', baseUrl, params, CONSUMER_SECRET, result.accessTokenSecret);
+  params.oauth_signature = signature;
+  
+  // Build full URL with API query parameters (not OAuth parameters)
+  const apiParams = new URLSearchParams({
+    file: params.file,
+    version: params.version,
+    actionType: params.actionType
+  });
+  
+  // Add lastShownIndexes to URL if provided
+  if (lastShownIndexes && actionType === 'viewNew') {
+    apiParams.append('lastShownIndexes', params.lastShownIndexes);
+  }
+  
+  const apiUrl = `${baseUrl}?${apiParams.toString()}`;
+  
+  const response = await fetch(apiUrl, {
+    method: 'GET',
+    headers: {
+      'Authorization': buildAuthHeader(params)
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch live match data: ${response.status} ${response.statusText}`);
   }
   
   const xmlText = await response.text();
