@@ -335,7 +335,7 @@ function showError(message) {
   
   const container = document.createElement('div');
   container.id = 'hattrick-match-view-container';
-  container.innerHTML = `<div class="error-message"><strong>Error:</strong> ${message}</div>`;
+  container.innerHTML = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(message)}</div>`;
   
   const mainContent = getMainContent();
   if (mainContent) {
