@@ -305,8 +305,15 @@ async function fetchMatchData(matchId) {
   const signature = await generateSignature('GET', baseUrl, params, CONSUMER_SECRET, result.accessTokenSecret);
   params.oauth_signature = signature;
   
-  // Build full URL with query parameters (including matchEvents=true as requested)
-  const apiUrl = `${baseUrl}?file=matchdetails&version=3.1&matchID=${encodeURIComponent(matchId)}&sourceSystem=Hattrick&matchEvents=true`;
+  // Build full URL with API query parameters (not OAuth parameters)
+  const apiParams = new URLSearchParams({
+    file: params.file,
+    version: params.version,
+    matchID: params.matchID,
+    sourceSystem: params.sourceSystem,
+    matchEvents: params.matchEvents
+  });
+  const apiUrl = `${baseUrl}?${apiParams.toString()}`;
   
   const response = await fetch(apiUrl, {
     method: 'GET',

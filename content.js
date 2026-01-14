@@ -139,6 +139,16 @@ function formatRawXML(xmlText) {
   `;
 }
 
+// Format error message with optional tip
+function formatErrorMessage(errorText, showDevModeTip = false) {
+  let message = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(errorText)}`;
+  if (showDevModeTip) {
+    message += `<br><br><small>Tip: Enable "Dev Mode" in the extension popup to view the raw XML response.</small>`;
+  }
+  message += `</div>`;
+  return message;
+}
+
 // Format match data as HTML
 function formatMatchData(data) {
   return `
@@ -640,7 +650,7 @@ async function loadMatchData() {
   try {
     const matchId = getMatchIdFromUrl();
     if (!matchId) {
-      contentDiv.innerHTML = '<div class="error-message">No match ID found in URL</div>';
+      contentDiv.innerHTML = formatErrorMessage('No match ID found in URL');
       return;
     }
     
@@ -670,11 +680,7 @@ async function loadMatchData() {
           contentDiv.innerHTML = formatMatchData(parsedData);
         } catch (parseError) {
           console.error('XML parsing error:', parseError);
-          contentDiv.innerHTML = `<div class="error-message">
-            <strong>XML Parsing Error:</strong> ${escapeHtml(parseError.message)}
-            <br><br>
-            <small>Tip: Enable "Dev Mode" in the extension popup to view the raw XML response.</small>
-          </div>`;
+          contentDiv.innerHTML = formatErrorMessage('XML Parsing Error: ' + parseError.message, true);
           return;
         }
       }
@@ -682,11 +688,11 @@ async function loadMatchData() {
       sidePane.dataset.loaded = 'true';
     } else {
       console.error('Failed to fetch match data:', response.error);
-      contentDiv.innerHTML = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(response.error)}</div>`;
+      contentDiv.innerHTML = formatErrorMessage(response.error);
     }
   } catch (error) {
     console.error('Error loading match data:', error);
-    contentDiv.innerHTML = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(error.message)}</div>`;
+    contentDiv.innerHTML = formatErrorMessage(error.message);
   }
 }
 

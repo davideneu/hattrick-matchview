@@ -17,12 +17,10 @@ async function checkAuthStatus() {
     
     showStatus(status, result.error, result.userInfo);
     
-    // Set dev mode checkbox state if connected
-    if (status === 'connected') {
-      const devModeCheckbox = document.getElementById('dev-mode-checkbox');
-      if (devModeCheckbox) {
-        devModeCheckbox.checked = result.devMode || false;
-      }
+    // Set dev mode checkbox state (if it exists)
+    const devModeCheckbox = document.getElementById('dev-mode-checkbox');
+    if (devModeCheckbox) {
+      devModeCheckbox.checked = result.devMode || false;
     }
   } catch (error) {
     console.error('Error checking auth status:', error);
