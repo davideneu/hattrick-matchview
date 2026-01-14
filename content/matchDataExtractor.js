@@ -34,22 +34,34 @@ class HattrickMatchDataExtractor {
 
   // Extract data from CHPP API via background worker
   async extractFromAPI(matchId) {
-    // Fetch match details and events in parallel via background
-    const [matchDetailsResponse, liveEventsResponse] = await Promise.all([
+    // Fetch match details (required) and events (optional, may fail) in parallel via background
+    const results = await Promise.allSettled([
       this.sendMessageToBackground({ action: 'getMatchDetails', matchId: matchId }),
       this.sendMessageToBackground({ action: 'getLiveMatchEvents', matchId: matchId })
-        .catch(err => {
-          console.warn('Could not fetch live events:', err);
-          return { success: false, error: err.message, data: [] };
-        })
     ]);
 
-    if (!matchDetailsResponse.success) {
-      throw new Error(matchDetailsResponse.error || 'Failed to fetch match details');
+    // Handle match details (must succeed)
+    const matchDetailsResult = results[0];
+    if (matchDetailsResult.status === 'rejected' || !matchDetailsResult.value.success) {
+      const error = matchDetailsResult.status === 'rejected' 
+        ? matchDetailsResult.reason.message 
+        : matchDetailsResult.value.error;
+      throw new Error(error || 'Failed to fetch match details');
     }
 
-    const matchDetails = matchDetailsResponse.data;
-    const liveEvents = liveEventsResponse.success ? liveEventsResponse.data : [];
+    // Handle live events (optional, can fail gracefully)
+    const liveEventsResult = results[1];
+    let liveEvents = [];
+    if (liveEventsResult.status === 'fulfilled' && liveEventsResult.value.success) {
+      liveEvents = liveEventsResult.value.data;
+    } else {
+      const error = liveEventsResult.status === 'rejected'
+        ? liveEventsResult.reason.message
+        : liveEventsResult.value.error;
+      console.warn('Could not fetch live events:', error);
+    }
+
+    const matchDetails = matchDetailsResult.value.data;
 
     // Merge the data
     return {

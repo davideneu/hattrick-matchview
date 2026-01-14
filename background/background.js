@@ -102,7 +102,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // If client doesn't exist yet, still try to clear from storage
     if (!apiClient) {
       chrome.storage.local.remove(['chppCredentials'], () => {
-        sendResponse({ success: true });
+        if (chrome.runtime.lastError) {
+          console.error('Error clearing credentials from storage:', chrome.runtime.lastError);
+          sendResponse({ success: false, error: chrome.runtime.lastError.message });
+        } else {
+          sendResponse({ success: true });
+        }
       });
     } else {
       apiClient.clearCredentials().then(() => {
