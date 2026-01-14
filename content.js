@@ -230,9 +230,6 @@ function displayMatchData(data) {
       padding: 15px;
       border-radius: 6px;
       margin-bottom: 15px;
-    }
-    
-    .possession-stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 15px;
