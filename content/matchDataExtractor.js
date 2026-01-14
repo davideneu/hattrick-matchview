@@ -36,8 +36,8 @@ class HattrickMatchDataExtractor {
   async extractFromAPI(matchId) {
     // Fetch match details (required) and events (optional, may fail) in parallel via background
     const results = await Promise.allSettled([
-      this.sendMessageToBackground({ action: 'getMatchDetails', matchId: matchId }),
-      this.sendMessageToBackground({ action: 'getLiveMatchEvents', matchId: matchId })
+      this.sendMessageToBackground({ action: 'getMatchDetails', matchId }),
+      this.sendMessageToBackground({ action: 'getLiveMatchEvents', matchId })
     ]);
 
     // Handle match details (must succeed)

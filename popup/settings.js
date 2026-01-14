@@ -74,11 +74,10 @@ async function handleAuthenticate() {
   statusText.textContent = 'Starting OAuth authentication...';
   
   try {
-    // Start OAuth flow via background worker (null values = use defaults)
+    // Start OAuth flow via background worker (omit credentials to use defaults)
     const response = await sendMessageToBackground({ 
-      action: 'authenticate',
-      consumerKey: null,
-      consumerSecret: null
+      action: 'authenticate'
+      // consumerKey and consumerSecret are omitted, background will use defaults
     });
     
     if (!response.success) {

@@ -148,12 +148,13 @@ async function handleAuthentication(button) {
     button.disabled = false;
     
     // Show success message
+    const SUCCESS_MESSAGE_DURATION_MS = 3000;
     const successMsg = showTemporaryMessage('✅ Authentication successful! Click the button to view match data.', 'success');
     setTimeout(() => {
       if (successMsg && successMsg.parentNode) {
         successMsg.parentNode.removeChild(successMsg);
       }
-    }, 3000);
+    }, SUCCESS_MESSAGE_DURATION_MS);
     
   } catch (error) {
     console.error('Authentication failed:', error);
