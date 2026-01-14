@@ -16,10 +16,12 @@ async function sendMessageToBackground(message, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const response = await new Promise((resolve, reject) => {
-        // Add a timeout to detect hanging requests
+        // Longer timeout for authentication (60s) vs other operations (10s)
+        const timeoutDuration = message.action === 'authenticate' ? 60000 : 10000;
+        
         const timeout = setTimeout(() => {
-          reject(new Error('Message timeout - background service worker may be inactive'));
-        }, 5000);
+          reject(new Error(`Request timeout after ${timeoutDuration/1000}s - background service worker may be inactive`));
+        }, timeoutDuration);
         
         chrome.runtime.sendMessage(message, (response) => {
           clearTimeout(timeout);
@@ -45,7 +47,7 @@ async function sendMessageToBackground(message, retries = 3) {
         console.log(`Retrying... (attempt ${attempt + 1}/${retries})`);
       } else {
         // All retries failed
-        throw new Error(`Failed to communicate with background service worker after ${retries} attempts. Please try reloading the extension.`);
+        throw new Error(`Failed to communicate with background service worker after ${retries} attempts: ${error.message}`);
       }
     }
   }
@@ -96,7 +98,7 @@ async function handleAuthenticate() {
   const statusIcon = document.getElementById('status-icon');
   const statusText = document.getElementById('status-text');
   
-  console.log('Using default credentials for authentication');
+  console.log('Starting authentication with default credentials');
   
   // Disable button and show progress
   authenticateBtn.disabled = true;
@@ -106,6 +108,8 @@ async function handleAuthenticate() {
   
   try {
     // Start OAuth flow via background worker (omit credentials to use defaults)
+    statusText.textContent = 'Requesting authorization token...';
+    
     const response = await sendMessageToBackground({ 
       action: 'authenticate'
       // consumerKey and consumerSecret are omitted, background will use defaults
@@ -120,7 +124,7 @@ async function handleAuthenticate() {
     statusText.textContent = 'Authentication successful!';
     
     // Show success message
-    alert('Successfully authenticated with Hattrick CHPP API!\n\nUsing default credentials for testing.\n\nThe extension will now use the API to fetch match data.');
+    alert('✅ Successfully authenticated with Hattrick CHPP API!\n\nUsing default credentials for testing.\n\nThe extension can now fetch match data from the API.');
     
     // Reload auth status
     await checkAuthStatus();
@@ -132,7 +136,20 @@ async function handleAuthenticate() {
     statusIcon.textContent = '🔴';
     statusText.textContent = `Authentication failed: ${error.message}`;
     
-    alert(`Authentication failed:\n${error.message}\n\nPlease try again.`);
+    // Provide helpful error messages based on error type
+    let errorMessage = `Authentication failed:\n${error.message}\n\n`;
+    
+    if (error.message.includes('timeout') || error.message.includes('inactive')) {
+      errorMessage += 'The authentication process took too long or the extension became inactive.\n\nTry:\n1. Reload the extension from chrome://extensions/\n2. Try authenticating again\n3. Complete the authorization quickly when the browser window opens';
+    } else if (error.message.includes('No response') || error.message.includes('service worker')) {
+      errorMessage += 'The extension background service is not responding.\n\nTry:\n1. Reload the extension from chrome://extensions/\n2. Close and reopen this settings page\n3. Try authenticating again';
+    } else if (error.message.includes('verifier')) {
+      errorMessage += 'The OAuth callback did not complete properly.\n\nTry:\n1. Make sure you clicked "Approve" in the authorization window\n2. Check that popups are not blocked\n3. Try authenticating again';
+    } else {
+      errorMessage += 'Please try again. If the problem persists, try reloading the extension.';
+    }
+    
+    alert(errorMessage);
     
   } finally {
     // Re-enable button

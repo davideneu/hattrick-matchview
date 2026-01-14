@@ -134,25 +134,41 @@ class CHPPApiClient {
     const authUrl = `${this.baseUrl}/oauth/authorize.aspx?oauth_token=${requestToken.oauth_token}`;
     
     return new Promise((resolve, reject) => {
+      // Set a timeout for the OAuth flow (5 minutes should be plenty)
+      const timeout = setTimeout(() => {
+        reject(new Error('Authentication timeout - please try again'));
+      }, 300000); // 5 minutes
+      
       chrome.identity.launchWebAuthFlow({
         url: authUrl,
         interactive: true
       }, (responseUrl) => {
+        clearTimeout(timeout);
+        
         if (chrome.runtime.lastError) {
           reject(new Error(chrome.runtime.lastError.message));
           return;
         }
         
-        // Parse verifier from redirect URL
-        const url = new URL(responseUrl);
-        const verifier = url.searchParams.get('oauth_verifier');
-        
-        if (!verifier) {
-          reject(new Error('No verifier received'));
+        if (!responseUrl) {
+          reject(new Error('No response URL received from authentication'));
           return;
         }
         
-        resolve(verifier);
+        // Parse verifier from redirect URL
+        try {
+          const url = new URL(responseUrl);
+          const verifier = url.searchParams.get('oauth_verifier');
+          
+          if (!verifier) {
+            reject(new Error('No verifier received in callback URL'));
+            return;
+          }
+          
+          resolve(verifier);
+        } catch (error) {
+          reject(new Error(`Failed to parse callback URL: ${error.message}`));
+        }
       });
     });
   }
