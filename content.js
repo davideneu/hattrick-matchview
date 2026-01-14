@@ -40,8 +40,20 @@ function decodeHtmlEntities(text) {
   return div.textContent.replace(/\s+/g, ' ').trim();
 }
 
-// Parse match XML data and convert to structured JSON
-function parseMatchXML(xmlText) {
+// Helper function to get text content safely from XML element
+function getTextFromXML(element, selector, defaultValue = '') {
+  const node = element.querySelector(selector);
+  return node ? node.textContent : defaultValue;
+}
+
+// Helper function to get all child elements as an array of DOM nodes
+function getElementsFromXML(element, selector) {
+  const nodes = element.querySelectorAll(selector);
+  return Array.from(nodes);
+}
+
+// Parse and validate XML, returning the parsed document
+function parseAndValidateXML(xmlText) {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
   
@@ -56,6 +68,13 @@ function parseMatchXML(xmlText) {
   if (errorNode) {
     throw new Error(errorNode.textContent || 'Unknown error from API');
   }
+  
+  return xmlDoc;
+}
+
+// Parse match XML data and convert to structured JSON
+function parseMatchXML(xmlText) {
+  const xmlDoc = parseAndValidateXML(xmlText);
   
   // Extract match data
   const match = xmlDoc.querySelector('Match');
@@ -63,104 +82,92 @@ function parseMatchXML(xmlText) {
     throw new Error('No match data found in response');
   }
   
-  // Helper function to get text content safely
-  const getText = (element, selector, defaultValue = '') => {
-    const node = element.querySelector(selector);
-    return node ? node.textContent : defaultValue;
-  };
-  
-  // Helper function to get all child elements as an array of DOM nodes
-  const getElements = (element, selector) => {
-    const nodes = element.querySelectorAll(selector);
-    return Array.from(nodes);
-  };
-  
   const matchData = {
-    matchId: getText(match, 'MatchID'),
-    matchType: getText(match, 'MatchType'),
-    matchDate: getText(match, 'MatchDate'),
-    finishedDate: getText(match, 'FinishedDate'),
-    status: getText(match, 'Status'),
+    matchId: getTextFromXML(match, 'MatchID'),
+    matchType: getTextFromXML(match, 'MatchType'),
+    matchDate: getTextFromXML(match, 'MatchDate'),
+    finishedDate: getTextFromXML(match, 'FinishedDate'),
+    status: getTextFromXML(match, 'Status'),
     
     homeTeam: {
-      teamId: getText(match, 'HomeTeam > HomeTeamID'),
-      teamName: getText(match, 'HomeTeam > HomeTeamName'),
-      dressURI: getText(match, 'HomeTeam > DressURI'),
-      formation: getText(match, 'HomeTeam > Formation'),
-      tacticType: getText(match, 'HomeTeam > TacticType'),
-      tacticSkill: getText(match, 'HomeTeam > TacticSkill'),
-      ratingMidfield: getText(match, 'HomeTeam > RatingMidfield'),
-      ratingRightDef: getText(match, 'HomeTeam > RatingRightDef'),
-      ratingMidDef: getText(match, 'HomeTeam > RatingMidDef'),
-      ratingLeftDef: getText(match, 'HomeTeam > RatingLeftDef'),
-      ratingRightAtt: getText(match, 'HomeTeam > RatingRightAtt'),
-      ratingMidAtt: getText(match, 'HomeTeam > RatingMidAtt'),
-      ratingLeftAtt: getText(match, 'HomeTeam > RatingLeftAtt')
+      teamId: getTextFromXML(match, 'HomeTeam > HomeTeamID'),
+      teamName: getTextFromXML(match, 'HomeTeam > HomeTeamName'),
+      dressURI: getTextFromXML(match, 'HomeTeam > DressURI'),
+      formation: getTextFromXML(match, 'HomeTeam > Formation'),
+      tacticType: getTextFromXML(match, 'HomeTeam > TacticType'),
+      tacticSkill: getTextFromXML(match, 'HomeTeam > TacticSkill'),
+      ratingMidfield: getTextFromXML(match, 'HomeTeam > RatingMidfield'),
+      ratingRightDef: getTextFromXML(match, 'HomeTeam > RatingRightDef'),
+      ratingMidDef: getTextFromXML(match, 'HomeTeam > RatingMidDef'),
+      ratingLeftDef: getTextFromXML(match, 'HomeTeam > RatingLeftDef'),
+      ratingRightAtt: getTextFromXML(match, 'HomeTeam > RatingRightAtt'),
+      ratingMidAtt: getTextFromXML(match, 'HomeTeam > RatingMidAtt'),
+      ratingLeftAtt: getTextFromXML(match, 'HomeTeam > RatingLeftAtt')
     },
     
     awayTeam: {
-      teamId: getText(match, 'AwayTeam > AwayTeamID'),
-      teamName: getText(match, 'AwayTeam > AwayTeamName'),
-      dressURI: getText(match, 'AwayTeam > DressURI'),
-      formation: getText(match, 'AwayTeam > Formation'),
-      tacticType: getText(match, 'AwayTeam > TacticType'),
-      tacticSkill: getText(match, 'AwayTeam > TacticSkill'),
-      ratingMidfield: getText(match, 'AwayTeam > RatingMidfield'),
-      ratingRightDef: getText(match, 'AwayTeam > RatingRightDef'),
-      ratingMidDef: getText(match, 'AwayTeam > RatingMidDef'),
-      ratingLeftDef: getText(match, 'AwayTeam > RatingLeftDef'),
-      ratingRightAtt: getText(match, 'AwayTeam > RatingRightAtt'),
-      ratingMidAtt: getText(match, 'AwayTeam > RatingMidAtt'),
-      ratingLeftAtt: getText(match, 'AwayTeam > RatingLeftAtt')
+      teamId: getTextFromXML(match, 'AwayTeam > AwayTeamID'),
+      teamName: getTextFromXML(match, 'AwayTeam > AwayTeamName'),
+      dressURI: getTextFromXML(match, 'AwayTeam > DressURI'),
+      formation: getTextFromXML(match, 'AwayTeam > Formation'),
+      tacticType: getTextFromXML(match, 'AwayTeam > TacticType'),
+      tacticSkill: getTextFromXML(match, 'AwayTeam > TacticSkill'),
+      ratingMidfield: getTextFromXML(match, 'AwayTeam > RatingMidfield'),
+      ratingRightDef: getTextFromXML(match, 'AwayTeam > RatingRightDef'),
+      ratingMidDef: getTextFromXML(match, 'AwayTeam > RatingMidDef'),
+      ratingLeftDef: getTextFromXML(match, 'AwayTeam > RatingLeftDef'),
+      ratingRightAtt: getTextFromXML(match, 'AwayTeam > RatingRightAtt'),
+      ratingMidAtt: getTextFromXML(match, 'AwayTeam > RatingMidAtt'),
+      ratingLeftAtt: getTextFromXML(match, 'AwayTeam > RatingLeftAtt')
     },
     
     arena: {
-      arenaId: getText(match, 'Arena > ArenaID'),
-      arenaName: getText(match, 'Arena > ArenaName'),
-      weatherId: getText(match, 'Arena > WeatherID'),
-      soldTotal: getText(match, 'Arena > SoldTotal')
+      arenaId: getTextFromXML(match, 'Arena > ArenaID'),
+      arenaName: getTextFromXML(match, 'Arena > ArenaName'),
+      weatherId: getTextFromXML(match, 'Arena > WeatherID'),
+      soldTotal: getTextFromXML(match, 'Arena > SoldTotal')
     },
     
     scoreboard: {
-      homeGoals: getText(match, 'HomeTeam > HomeGoals', '0'),
-      awayGoals: getText(match, 'AwayTeam > AwayGoals', '0')
+      homeGoals: getTextFromXML(match, 'HomeTeam > HomeGoals', '0'),
+      awayGoals: getTextFromXML(match, 'AwayTeam > AwayGoals', '0')
     },
     
     // Parse events (goals, cards, injuries, etc.)
-    events: getElements(match, 'Scoreboard > Goal').map(goal => ({
+    events: getElementsFromXML(match, 'Scoreboard > Goal').map(goal => ({
       type: 'goal',
-      minute: getText(goal, 'Minute'),
-      matchPart: getText(goal, 'MatchPart'),
-      subjectTeamId: getText(goal, 'SubjectTeamID'),
-      subjectPlayerId: getText(goal, 'SubjectPlayerID'),
-      subjectPlayerName: getText(goal, 'SubjectPlayerName'),
-      objectPlayerId: getText(goal, 'ObjectPlayerID'),
-      objectPlayerName: getText(goal, 'ObjectPlayerName')
+      minute: getTextFromXML(goal, 'Minute'),
+      matchPart: getTextFromXML(goal, 'MatchPart'),
+      subjectTeamId: getTextFromXML(goal, 'SubjectTeamID'),
+      subjectPlayerId: getTextFromXML(goal, 'SubjectPlayerID'),
+      subjectPlayerName: getTextFromXML(goal, 'SubjectPlayerName'),
+      objectPlayerId: getTextFromXML(goal, 'ObjectPlayerID'),
+      objectPlayerName: getTextFromXML(goal, 'ObjectPlayerName')
     })),
     
     // Parse all event list items (includes all events with EventText)
     allEvents: (() => {
-      const eventList = getElements(match, 'EventList > Event');
+      const eventList = getElementsFromXML(match, 'EventList > Event');
       return eventList.map(event => ({
-        eventIndex: getText(event, 'EventIndex'),
-        eventTypeID: getText(event, 'EventTypeID'),
-        eventVariation: getText(event, 'EventVariation'),
-        minute: getText(event, 'Minute'),
-        matchPart: getText(event, 'MatchPart'),
-        subjectTeamId: getText(event, 'SubjectTeamID'),
-        subjectPlayerId: getText(event, 'SubjectPlayerID'),
-        subjectPlayerName: getText(event, 'SubjectPlayerName'),
-        objectPlayerId: getText(event, 'ObjectPlayerID'),
-        objectPlayerName: getText(event, 'ObjectPlayerName'),
-        eventText: getText(event, 'EventText')
+        eventIndex: getTextFromXML(event, 'EventIndex'),
+        eventTypeID: getTextFromXML(event, 'EventTypeID'),
+        eventVariation: getTextFromXML(event, 'EventVariation'),
+        minute: getTextFromXML(event, 'Minute'),
+        matchPart: getTextFromXML(event, 'MatchPart'),
+        subjectTeamId: getTextFromXML(event, 'SubjectTeamID'),
+        subjectPlayerId: getTextFromXML(event, 'SubjectPlayerID'),
+        subjectPlayerName: getTextFromXML(event, 'SubjectPlayerName'),
+        objectPlayerId: getTextFromXML(event, 'ObjectPlayerID'),
+        objectPlayerName: getTextFromXML(event, 'ObjectPlayerName'),
+        eventText: getTextFromXML(event, 'EventText')
       }));
     })(),
     
     // Additional data
-    possessionFirstHalfHome: getText(match, 'PossessionFirstHalfHome'),
-    possessionFirstHalfAway: getText(match, 'PossessionFirstHalfAway'),
-    possessionSecondHalfHome: getText(match, 'PossessionSecondHalfHome'),
-    possessionSecondHalfAway: getText(match, 'PossessionSecondHalfAway')
+    possessionFirstHalfHome: getTextFromXML(match, 'PossessionFirstHalfHome'),
+    possessionFirstHalfAway: getTextFromXML(match, 'PossessionFirstHalfAway'),
+    possessionSecondHalfHome: getTextFromXML(match, 'PossessionSecondHalfHome'),
+    possessionSecondHalfAway: getTextFromXML(match, 'PossessionSecondHalfAway')
   };
   
   return matchData;
@@ -168,32 +175,7 @@ function parseMatchXML(xmlText) {
 
 // Parse live match XML data and convert to structured JSON
 function parseLiveMatchXML(xmlText) {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-  
-  // Check for XML parsing errors
-  const parseError = xmlDoc.querySelector('parsererror');
-  if (parseError) {
-    throw new Error('Invalid XML format: ' + parseError.textContent);
-  }
-  
-  // Check for API errors in the XML
-  const errorNode = xmlDoc.querySelector('Error');
-  if (errorNode) {
-    throw new Error(errorNode.textContent || 'Unknown error from API');
-  }
-  
-  // Helper function to get text content safely
-  const getText = (element, selector, defaultValue = '') => {
-    const node = element.querySelector(selector);
-    return node ? node.textContent : defaultValue;
-  };
-  
-  // Helper function to get all child elements as an array of DOM nodes
-  const getElements = (element, selector) => {
-    const nodes = element.querySelectorAll(selector);
-    return Array.from(nodes);
-  };
+  const xmlDoc = parseAndValidateXML(xmlText);
   
   // Extract team data
   const team = xmlDoc.querySelector('Team');
@@ -202,41 +184,41 @@ function parseLiveMatchXML(xmlText) {
   }
   
   const teamData = {
-    teamId: getText(team, 'TeamID'),
-    teamName: getText(team, 'TeamName'),
-    shortTeamName: getText(team, 'ShortTeamName'),
+    teamId: getTextFromXML(team, 'TeamID'),
+    teamName: getTextFromXML(team, 'TeamName'),
+    shortTeamName: getTextFromXML(team, 'ShortTeamName'),
     league: {
-      leagueId: getText(team, 'League > LeagueID'),
-      leagueName: getText(team, 'League > LeagueName'),
-      leagueLevelUnitId: getText(team, 'League > LeagueLevelUnit > LeagueLevelUnitID'),
-      leagueLevelUnitName: getText(team, 'League > LeagueLevelUnit > LeagueLevelUnitName'),
-      leagueLevel: getText(team, 'League > LeagueLevelUnit > LeagueLevel')
+      leagueId: getTextFromXML(team, 'League > LeagueID'),
+      leagueName: getTextFromXML(team, 'League > LeagueName'),
+      leagueLevelUnitId: getTextFromXML(team, 'League > LeagueLevelUnit > LeagueLevelUnitID'),
+      leagueLevelUnitName: getTextFromXML(team, 'League > LeagueLevelUnit > LeagueLevelUnitName'),
+      leagueLevel: getTextFromXML(team, 'League > LeagueLevelUnit > LeagueLevel')
     }
   };
   
   // Extract match list
-  const matchList = getElements(team, 'MatchList > Match').map(match => ({
-    matchId: getText(match, 'MatchID'),
+  const matchList = getElementsFromXML(team, 'MatchList > Match').map(match => ({
+    matchId: getTextFromXML(match, 'MatchID'),
     homeTeam: {
-      homeTeamId: getText(match, 'HomeTeam > HomeTeamID'),
-      homeTeamName: getText(match, 'HomeTeam > HomeTeamName'),
-      homeTeamShortName: getText(match, 'HomeTeam > HomeTeamShortName')
+      homeTeamId: getTextFromXML(match, 'HomeTeam > HomeTeamID'),
+      homeTeamName: getTextFromXML(match, 'HomeTeam > HomeTeamName'),
+      homeTeamShortName: getTextFromXML(match, 'HomeTeam > HomeTeamShortName')
     },
     awayTeam: {
-      awayTeamId: getText(match, 'AwayTeam > AwayTeamID'),
-      awayTeamName: getText(match, 'AwayTeam > AwayTeamName'),
-      awayTeamShortName: getText(match, 'AwayTeam > AwayTeamShortName')
+      awayTeamId: getTextFromXML(match, 'AwayTeam > AwayTeamID'),
+      awayTeamName: getTextFromXML(match, 'AwayTeam > AwayTeamName'),
+      awayTeamShortName: getTextFromXML(match, 'AwayTeam > AwayTeamShortName')
     },
-    matchDate: getText(match, 'MatchDate'),
-    sourceSystem: getText(match, 'SourceSystem', 'Hattrick'),
-    matchType: getText(match, 'MatchType'),
-    matchContextId: getText(match, 'MatchContextId'),
-    cupLevel: getText(match, 'CupLevel'),
-    cupLevelIndex: getText(match, 'CupLevelIndex'),
-    homeGoals: getText(match, 'HomeGoals', '0'),
-    awayGoals: getText(match, 'AwayGoals', '0'),
-    status: getText(match, 'Status'),
-    ordersGiven: getText(match, 'OrdersGiven')
+    matchDate: getTextFromXML(match, 'MatchDate'),
+    sourceSystem: getTextFromXML(match, 'SourceSystem', 'Hattrick'),
+    matchType: getTextFromXML(match, 'MatchType'),
+    matchContextId: getTextFromXML(match, 'MatchContextId'),
+    cupLevel: getTextFromXML(match, 'CupLevel'),
+    cupLevelIndex: getTextFromXML(match, 'CupLevelIndex'),
+    homeGoals: getTextFromXML(match, 'HomeGoals', '0'),
+    awayGoals: getTextFromXML(match, 'AwayGoals', '0'),
+    status: getTextFromXML(match, 'Status'),
+    ordersGiven: getTextFromXML(match, 'OrdersGiven')
   }));
   
   return {
