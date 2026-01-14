@@ -16,6 +16,14 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Decode HTML entities in text (for EventText which may contain &amp;, &quot;, etc.)
+function decodeHtmlEntities(text) {
+  if (text === null || text === undefined) return '';
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = String(text);
+  return textarea.value;
+}
+
 // Parse match XML data and convert to structured JSON
 function parseMatchXML(xmlText) {
   const parser = new DOMParser();
@@ -113,6 +121,24 @@ function parseMatchXML(xmlText) {
       objectPlayerId: getText(goal, 'ObjectPlayerID'),
       objectPlayerName: getText(goal, 'ObjectPlayerName')
     })),
+    
+    // Parse all event list items (includes all events with EventText)
+    allEvents: (() => {
+      const eventList = getElements(match, 'EventList > Event');
+      return eventList.map(event => ({
+        eventIndex: getText(event, 'EventIndex'),
+        eventTypeID: getText(event, 'EventTypeID'),
+        eventVariation: getText(event, 'EventVariation'),
+        minute: getText(event, 'Minute'),
+        matchPart: getText(event, 'MatchPart'),
+        subjectTeamId: getText(event, 'SubjectTeamID'),
+        subjectPlayerId: getText(event, 'SubjectPlayerID'),
+        subjectPlayerName: getText(event, 'SubjectPlayerName'),
+        objectPlayerId: getText(event, 'ObjectPlayerID'),
+        objectPlayerName: getText(event, 'ObjectPlayerName'),
+        eventText: getText(event, 'EventText')
+      }));
+    })(),
     
     // Additional data
     possessionFirstHalfHome: getText(match, 'PossessionFirstHalfHome'),
@@ -244,6 +270,26 @@ function formatMatchData(data) {
               </li>
             `).join('')}
           </ul>
+        </div>
+      ` : ''}
+      
+      ${data.allEvents && data.allEvents.length > 0 ? `
+        <div class="all-events-section">
+          <h3>Match Events Timeline</h3>
+          <div class="all-events-list">
+            ${data.allEvents.map(event => `
+              <div class="event-item" data-event-type="${escapeHtml(event.eventTypeID)}">
+                <div class="event-time">
+                  <span class="minute">${escapeHtml(event.minute)}'</span>
+                  ${event.matchPart === '2' ? '<span class="match-part">2H</span>' : '<span class="match-part">1H</span>'}
+                </div>
+                <div class="event-content">
+                  <div class="event-text">${escapeHtml(decodeHtmlEntities(event.eventText))}</div>
+                  ${event.subjectPlayerName ? `<div class="event-players"><small>${escapeHtml(event.subjectPlayerName)}</small></div>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       ` : ''}
     </div>
@@ -416,15 +462,17 @@ function createSidePane() {
     }
     
     .sidepane-content .match-header {
-      background: #f9fafb;
-      padding: 15px;
-      border-radius: 6px;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      padding: 18px;
+      border-radius: 8px;
       margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
     
     .sidepane-content .match-meta p {
       margin: 5px 0;
       font-size: 13px;
+      color: #374151;
     }
     
     .sidepane-content .scoreboard {
@@ -438,45 +486,54 @@ function createSidePane() {
       align-items: center;
       font-size: 14px;
       font-weight: bold;
-      padding: 10px;
-      background: #e0e7ff;
-      border-radius: 6px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
     }
     
     .sidepane-content .score {
-      font-size: 18px;
+      font-size: 20px;
       color: #1e40af;
+      font-weight: 700;
     }
     
     .sidepane-content .team-name {
       font-size: 12px;
+      color: #1e40af;
+      font-weight: 600;
     }
     
     .sidepane-content .arena-info {
-      background: #f9fafb;
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
       padding: 15px;
-      border-radius: 6px;
+      border-radius: 8px;
       margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
     
     .sidepane-content .arena-info p {
       margin: 5px 0;
       font-size: 13px;
+      color: #374151;
     }
     
     .sidepane-content .team-section {
-      background: #f9fafb;
+      background: linear-gradient(135deg, #fafafa 0%, #f4f4f5 100%);
       padding: 15px;
-      border-radius: 6px;
+      border-radius: 8px;
       margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
     
     .sidepane-content .home-team {
       border-left: 4px solid #22c55e;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     }
     
     .sidepane-content .away-team {
       border-left: 4px solid #ef4444;
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
     }
     
     .sidepane-content .team-stats p {
@@ -496,14 +553,16 @@ function createSidePane() {
     }
     
     .sidepane-content .possession-stats {
-      background: #f9fafb;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
       padding: 15px;
-      border-radius: 6px;
+      border-radius: 8px;
       margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
     
     .sidepane-content .possession-stats h3 {
       margin-top: 0;
+      color: #065f46;
     }
     
     .sidepane-content .possession-container {
@@ -528,9 +587,11 @@ function createSidePane() {
     }
     
     .sidepane-content .events-section {
-      background: #f9fafb;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
       padding: 15px;
-      border-radius: 6px;
+      border-radius: 8px;
+      border-left: 4px solid #22c55e;
+      margin-bottom: 15px;
     }
     
     .sidepane-content .events-list {
@@ -540,10 +601,113 @@ function createSidePane() {
     
     .sidepane-content .events-list li {
       margin: 8px 0;
-      padding: 8px;
+      padding: 10px 12px;
       background: white;
-      border-radius: 4px;
+      border-radius: 6px;
       font-size: 13px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      border-left: 3px solid #22c55e;
+    }
+    
+    /* All Events Timeline Section */
+    .sidepane-content .all-events-section {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #f59e0b;
+    }
+    
+    .sidepane-content .all-events-section h3 {
+      margin-top: 0;
+      color: #92400e;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+    
+    .sidepane-content .all-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .sidepane-content .event-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-left: 3px solid #3b82f6;
+    }
+    
+    .sidepane-content .event-item:hover {
+      transform: translateX(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .sidepane-content .event-time {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 50px;
+      padding: 5px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-radius: 6px;
+      border: 1px solid #93c5fd;
+    }
+    
+    .sidepane-content .event-time .minute {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e40af;
+      line-height: 1;
+    }
+    
+    .sidepane-content .event-time .match-part {
+      font-size: 10px;
+      font-weight: 600;
+      color: #60a5fa;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    
+    .sidepane-content .event-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .sidepane-content .event-text {
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+    
+    .sidepane-content .event-players {
+      font-size: 11px;
+      color: #6b7280;
+      font-style: italic;
+    }
+    
+    /* Event type specific colors */
+    .sidepane-content .event-item[data-event-type="10"],
+    .sidepane-content .event-item[data-event-type="11"],
+    .sidepane-content .event-item[data-event-type="12"] {
+      border-left-color: #22c55e;
+    }
+    
+    .sidepane-content .event-item[data-event-type="20"],
+    .sidepane-content .event-item[data-event-type="21"] {
+      border-left-color: #eab308;
+    }
+    
+    .sidepane-content .event-item[data-event-type="22"] {
+      border-left-color: #ef4444;
     }
     
     .sidepane-content .error-message {
