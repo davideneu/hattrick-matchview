@@ -2,21 +2,33 @@
 console.log('Hattrick Matchview background service worker loaded');
 
 // Import API client using importScripts (path relative to extension root)
-importScripts('api/chppApiClient.js');
+try {
+  importScripts('api/chppApiClient.js');
+  console.log('CHPP API client imported successfully');
+} catch (error) {
+  console.error('Failed to import CHPP API client:', error);
+}
 
 // Initialize API client for background context
 let apiClient = null;
 
 // Initialize API client
 async function initializeAPIClient() {
-  if (!apiClient) {
-    // We need to instantiate CHPPApiClient in the background
-    // Since service workers can't import from content scripts directly,
-    // we'll need to have it available here
-    apiClient = new CHPPApiClient();
-    await apiClient.initialize();
+  try {
+    if (!apiClient) {
+      // We need to instantiate CHPPApiClient in the background
+      // Since service workers can't import from content scripts directly,
+      // we'll need to have it available here
+      console.log('Initializing CHPP API client...');
+      apiClient = new CHPPApiClient();
+      await apiClient.initialize();
+      console.log('CHPP API client initialized successfully');
+    }
+    return apiClient;
+  } catch (error) {
+    console.error('Error initializing API client:', error);
+    throw error;
   }
-  return apiClient;
 }
 
 // Listen for extension installation
