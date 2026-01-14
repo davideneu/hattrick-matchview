@@ -25,17 +25,21 @@ async function checkAuthStatus() {
     
     if (isAuthenticated) {
       statusIcon.textContent = '🟢';
-      statusText.textContent = 'Authenticated - Using CHPP API';
+      statusText.textContent = `Authenticated - Using CHPP API ${apiClient.isUsingDefaultCredentials() ? '(Default Credentials)' : '(User Credentials)'}`;
       
       // Load and display current credentials (masked)
       const credentials = await apiClient.loadCredentials();
       if (credentials) {
         document.getElementById('consumer-key').value = maskCredential(credentials.consumerKey);
         document.getElementById('consumer-secret').value = maskCredential(credentials.consumerSecret);
+      } else if (apiClient.isUsingDefaultCredentials()) {
+        // Show masked default credentials
+        document.getElementById('consumer-key').value = maskCredential(apiClient.defaultConsumerKey);
+        document.getElementById('consumer-secret').value = maskCredential(apiClient.defaultConsumerSecret);
       }
     } else {
-      statusIcon.textContent = '⚪';
-      statusText.textContent = 'Not Authenticated - Using DOM Parsing (Fallback)';
+      statusIcon.textContent = '🟡';
+      statusText.textContent = 'Ready to Authenticate - Click "Authenticate" below';
     }
   } catch (error) {
     console.error('Error checking auth status:', error);
@@ -67,21 +71,19 @@ function attachEventListeners() {
 
 // Handle authentication
 async function handleAuthenticate() {
-  const consumerKey = document.getElementById('consumer-key').value.trim();
-  const consumerSecret = document.getElementById('consumer-secret').value.trim();
+  let consumerKey = document.getElementById('consumer-key').value.trim();
+  let consumerSecret = document.getElementById('consumer-secret').value.trim();
   const authenticateBtn = document.getElementById('authenticate-btn');
   const statusIcon = document.getElementById('status-icon');
   const statusText = document.getElementById('status-text');
   
-  // Validate inputs
-  if (!consumerKey || !consumerSecret) {
-    alert('Please enter both Consumer Key and Consumer Secret');
-    return;
-  }
-  
-  // Check if values are masked (user didn't change them)
-  if (consumerKey.includes('***') || consumerSecret.includes('***')) {
-    alert('Please enter new credentials or clear existing ones first');
+  // If fields are empty or masked, use default credentials
+  if (!consumerKey || consumerKey.includes('***')) {
+    consumerKey = apiClient.defaultConsumerKey;
+    consumerSecret = apiClient.defaultConsumerSecret;
+    console.log('Using default credentials for authentication');
+  } else if (!consumerSecret || consumerSecret.includes('***')) {
+    alert('Please enter both Consumer Key and Consumer Secret, or leave both empty to use default credentials');
     return;
   }
   
@@ -100,7 +102,8 @@ async function handleAuthenticate() {
     statusText.textContent = 'Authentication successful!';
     
     // Show success message
-    alert('Successfully authenticated with Hattrick CHPP API!\n\nThe extension will now use the API to fetch match data.');
+    const usingDefault = (consumerKey === apiClient.defaultConsumerKey);
+    alert(`Successfully authenticated with Hattrick CHPP API!\n\n${usingDefault ? 'Using default credentials for testing.' : 'Using your custom credentials.'}\n\nThe extension will now use the API to fetch match data.`);
     
     // Reload auth status
     await checkAuthStatus();
@@ -123,7 +126,7 @@ async function handleAuthenticate() {
 
 // Handle clear authentication
 async function handleClearAuth() {
-  const confirmed = confirm('Are you sure you want to clear your authentication?\n\nThe extension will fall back to DOM parsing mode.');
+  const confirmed = confirm('Are you sure you want to clear your authentication?\n\nYou will need to re-authenticate to use the extension.');
   
   if (!confirmed) return;
   
@@ -138,10 +141,10 @@ async function handleClearAuth() {
     document.getElementById('consumer-secret').value = '';
     
     // Update status
-    statusIcon.textContent = '⚪';
-    statusText.textContent = 'Authentication cleared - Using DOM Parsing (Fallback)';
+    statusIcon.textContent = '🟡';
+    statusText.textContent = 'Authentication cleared - Ready to re-authenticate';
     
-    alert('Authentication cleared successfully.\n\nThe extension will now use DOM parsing mode.');
+    alert('Authentication cleared successfully.\n\nClick "Authenticate" to re-authenticate (or leave fields empty to use default credentials).');
     
   } catch (error) {
     console.error('Error clearing authentication:', error);

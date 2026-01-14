@@ -25,7 +25,8 @@
       <section class="api-config">
         <h2>CHPP API Configuration</h2>
         <div class="info-box">
-          <p><strong>Note:</strong> To use the CHPP API, you need to register your application at Hattrick's CHPP website.</p>
+          <p><strong>Quick Start:</strong> Leave the fields empty and click "Authenticate" to use default test credentials!</p>
+          <p><strong>Custom Credentials:</strong> To use your own CHPP API credentials:</p>
           <ol>
             <li>Go to <a href="https://www.hattrick.org/Community/CHPP/" target="_blank">Hattrick CHPP</a></li>
             <li>Register a new application</li>
@@ -36,13 +37,13 @@
 
         <form id="api-config-form">
           <div class="form-group">
-            <label for="consumer-key">Consumer Key:</label>
-            <input type="text" id="consumer-key" placeholder="Enter your CHPP consumer key" />
+            <label for="consumer-key">Consumer Key (optional - leave empty for default):</label>
+            <input type="text" id="consumer-key" placeholder="Leave empty to use test credentials" />
           </div>
 
           <div class="form-group">
-            <label for="consumer-secret">Consumer Secret:</label>
-            <input type="password" id="consumer-secret" placeholder="Enter your CHPP consumer secret" />
+            <label for="consumer-secret">Consumer Secret (optional - leave empty for default):</label>
+            <input type="password" id="consumer-secret" placeholder="Leave empty to use test credentials" />
           </div>
 
           <div class="button-group">
@@ -57,16 +58,16 @@
       </section>
 
       <section class="fallback-mode">
-        <h2>Fallback Mode</h2>
+        <h2>How It Works</h2>
         <div class="info-box">
-          <p>If you don't have CHPP API credentials, the extension will automatically fall back to DOM parsing mode, which reads match data directly from the web page.</p>
-          <p><strong>DOM Parsing Mode:</strong></p>
+          <p><strong>This extension now uses CHPP API exclusively.</strong></p>
           <ul>
-            <li>✅ No API credentials required</li>
-            <li>✅ Works immediately</li>
-            <li>⚠️ Limited to data visible on the page</li>
-            <li>⚠️ May be affected by page changes</li>
+            <li>✅ More reliable and structured data</li>
+            <li>✅ Real-time match events and statistics</li>
+            <li>✅ Test credentials included for quick setup</li>
+            <li>✅ Support for custom credentials for production use</li>
           </ul>
+          <p><em>Click "Authenticate" above to get started!</em></p>
         </div>
       </section>
     </main>

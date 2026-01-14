@@ -5,6 +5,9 @@ class CHPPApiClient {
   constructor() {
     this.baseUrl = 'https://chpp.hattrick.org';
     this.xmlBaseUrl = 'https://www.hattrick.org/chppxml';
+    // Default credentials for testing (users can override in settings)
+    this.defaultConsumerKey = 'SNbqfVnQkV9IkrMhbGAqae';
+    this.defaultConsumerSecret = 'EriFMHbmnnKG9HT3YL7Y9LANP7ziJtaHWnpJqSeFLsH';
     this.consumerKey = null;
     this.consumerSecret = null;
     this.accessToken = null;
@@ -20,6 +23,10 @@ class CHPPApiClient {
       this.consumerSecret = stored.consumerSecret;
       this.accessToken = stored.accessToken;
       this.accessTokenSecret = stored.accessTokenSecret;
+    } else {
+      // Use default credentials if no user credentials are stored
+      this.consumerKey = this.defaultConsumerKey;
+      this.consumerSecret = this.defaultConsumerSecret;
     }
     return this.isAuthenticated();
   }
@@ -28,6 +35,11 @@ class CHPPApiClient {
   isAuthenticated() {
     return !!(this.consumerKey && this.consumerSecret && 
               this.accessToken && this.accessTokenSecret);
+  }
+
+  // Check if using default credentials
+  isUsingDefaultCredentials() {
+    return this.consumerKey === this.defaultConsumerKey;
   }
 
   // Load credentials from storage
