@@ -291,6 +291,8 @@ async function fetchMatchData(matchId) {
     file: 'matchdetails',
     version: '3.1',
     matchID: matchId,
+    sourceSystem: 'Hattrick',
+    matchEvents: 'true',
     oauth_consumer_key: CONSUMER_KEY,
     oauth_token: result.accessToken,
     oauth_signature_method: 'HMAC-SHA1',
@@ -303,8 +305,15 @@ async function fetchMatchData(matchId) {
   const signature = await generateSignature('GET', baseUrl, params, CONSUMER_SECRET, result.accessTokenSecret);
   params.oauth_signature = signature;
   
-  // Build full URL with query parameters
-  const apiUrl = `${baseUrl}?file=matchdetails&version=3.1&matchID=${encodeURIComponent(matchId)}`;
+  // Build full URL with API query parameters (not OAuth parameters)
+  const apiParams = new URLSearchParams({
+    file: params.file,
+    version: params.version,
+    matchID: params.matchID,
+    sourceSystem: params.sourceSystem,
+    matchEvents: params.matchEvents
+  });
+  const apiUrl = `${baseUrl}?${apiParams.toString()}`;
   
   const response = await fetch(apiUrl, {
     method: 'GET',
@@ -319,108 +328,8 @@ async function fetchMatchData(matchId) {
   
   const xmlText = await response.text();
   
-  // Parse XML and convert to JSON
-  return parseMatchXML(xmlText);
+  // Return raw XML text instead of parsing it here
+  // Parsing will be done in content.js where DOMParser is available
+  return xmlText;
 }
 
-// Parse match XML data and convert to structured JSON
-function parseMatchXML(xmlText) {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-  
-  // Check for errors in the XML
-  const errorNode = xmlDoc.querySelector('Error');
-  if (errorNode) {
-    throw new Error(errorNode.textContent || 'Unknown error from API');
-  }
-  
-  // Extract match data
-  const match = xmlDoc.querySelector('Match');
-  if (!match) {
-    throw new Error('No match data found in response');
-  }
-  
-  // Helper function to get text content safely
-  const getText = (element, selector, defaultValue = '') => {
-    const node = element.querySelector(selector);
-    return node ? node.textContent : defaultValue;
-  };
-  
-  // Helper function to get all child elements as an array of DOM nodes
-  const getElements = (element, selector) => {
-    const nodes = element.querySelectorAll(selector);
-    return Array.from(nodes);
-  };
-  
-  const matchData = {
-    matchId: getText(match, 'MatchID'),
-    matchType: getText(match, 'MatchType'),
-    matchDate: getText(match, 'MatchDate'),
-    finishedDate: getText(match, 'FinishedDate'),
-    status: getText(match, 'Status'),
-    
-    homeTeam: {
-      teamId: getText(match, 'HomeTeam > HomeTeamID'),
-      teamName: getText(match, 'HomeTeam > HomeTeamName'),
-      dressURI: getText(match, 'HomeTeam > DressURI'),
-      formation: getText(match, 'HomeTeam > Formation'),
-      tacticType: getText(match, 'HomeTeam > TacticType'),
-      tacticSkill: getText(match, 'HomeTeam > TacticSkill'),
-      ratingMidfield: getText(match, 'HomeTeam > RatingMidfield'),
-      ratingRightDef: getText(match, 'HomeTeam > RatingRightDef'),
-      ratingMidDef: getText(match, 'HomeTeam > RatingMidDef'),
-      ratingLeftDef: getText(match, 'HomeTeam > RatingLeftDef'),
-      ratingRightAtt: getText(match, 'HomeTeam > RatingRightAtt'),
-      ratingMidAtt: getText(match, 'HomeTeam > RatingMidAtt'),
-      ratingLeftAtt: getText(match, 'HomeTeam > RatingLeftAtt')
-    },
-    
-    awayTeam: {
-      teamId: getText(match, 'AwayTeam > AwayTeamID'),
-      teamName: getText(match, 'AwayTeam > AwayTeamName'),
-      dressURI: getText(match, 'AwayTeam > DressURI'),
-      formation: getText(match, 'AwayTeam > Formation'),
-      tacticType: getText(match, 'AwayTeam > TacticType'),
-      tacticSkill: getText(match, 'AwayTeam > TacticSkill'),
-      ratingMidfield: getText(match, 'AwayTeam > RatingMidfield'),
-      ratingRightDef: getText(match, 'AwayTeam > RatingRightDef'),
-      ratingMidDef: getText(match, 'AwayTeam > RatingMidDef'),
-      ratingLeftDef: getText(match, 'AwayTeam > RatingLeftDef'),
-      ratingRightAtt: getText(match, 'AwayTeam > RatingRightAtt'),
-      ratingMidAtt: getText(match, 'AwayTeam > RatingMidAtt'),
-      ratingLeftAtt: getText(match, 'AwayTeam > RatingLeftAtt')
-    },
-    
-    arena: {
-      arenaId: getText(match, 'Arena > ArenaID'),
-      arenaName: getText(match, 'Arena > ArenaName'),
-      weatherId: getText(match, 'Arena > WeatherID'),
-      soldTotal: getText(match, 'Arena > SoldTotal')
-    },
-    
-    scoreboard: {
-      homeGoals: getText(match, 'HomeTeam > HomeGoals', '0'),
-      awayGoals: getText(match, 'AwayTeam > AwayGoals', '0')
-    },
-    
-    // Parse events (goals, cards, injuries, etc.)
-    events: getElements(match, 'Scoreboard > Goal').map(goal => ({
-      type: 'goal',
-      minute: getText(goal, 'Minute'),
-      matchPart: getText(goal, 'MatchPart'),
-      subjectTeamId: getText(goal, 'SubjectTeamID'),
-      subjectPlayerId: getText(goal, 'SubjectPlayerID'),
-      subjectPlayerName: getText(goal, 'SubjectPlayerName'),
-      objectPlayerId: getText(goal, 'ObjectPlayerID'),
-      objectPlayerName: getText(goal, 'ObjectPlayerName')
-    })),
-    
-    // Additional data
-    possessionFirstHalfHome: getText(match, 'PossessionFirstHalfHome'),
-    possessionFirstHalfAway: getText(match, 'PossessionFirstHalfAway'),
-    possessionSecondHalfHome: getText(match, 'PossessionSecondHalfHome'),
-    possessionSecondHalfAway: getText(match, 'PossessionSecondHalfAway')
-  };
-  
-  return matchData;
-}

@@ -113,3 +113,32 @@ h1 {
   text-align: center;
   color: #666;
 }
+
+.dev-mode-toggle {
+  margin: 15px 0;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  margin-right: 10px;
+  accent-color: #3b82f6;
+}
+
+.toggle-text {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+}

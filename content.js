@@ -16,6 +16,139 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Parse match XML data and convert to structured JSON
+function parseMatchXML(xmlText) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+  
+  // Check for XML parsing errors
+  const parseError = xmlDoc.querySelector('parsererror');
+  if (parseError) {
+    throw new Error('Invalid XML format: ' + parseError.textContent);
+  }
+  
+  // Check for API errors in the XML
+  const errorNode = xmlDoc.querySelector('Error');
+  if (errorNode) {
+    throw new Error(errorNode.textContent || 'Unknown error from API');
+  }
+  
+  // Extract match data
+  const match = xmlDoc.querySelector('Match');
+  if (!match) {
+    throw new Error('No match data found in response');
+  }
+  
+  // Helper function to get text content safely
+  const getText = (element, selector, defaultValue = '') => {
+    const node = element.querySelector(selector);
+    return node ? node.textContent : defaultValue;
+  };
+  
+  // Helper function to get all child elements as an array of DOM nodes
+  const getElements = (element, selector) => {
+    const nodes = element.querySelectorAll(selector);
+    return Array.from(nodes);
+  };
+  
+  const matchData = {
+    matchId: getText(match, 'MatchID'),
+    matchType: getText(match, 'MatchType'),
+    matchDate: getText(match, 'MatchDate'),
+    finishedDate: getText(match, 'FinishedDate'),
+    status: getText(match, 'Status'),
+    
+    homeTeam: {
+      teamId: getText(match, 'HomeTeam > HomeTeamID'),
+      teamName: getText(match, 'HomeTeam > HomeTeamName'),
+      dressURI: getText(match, 'HomeTeam > DressURI'),
+      formation: getText(match, 'HomeTeam > Formation'),
+      tacticType: getText(match, 'HomeTeam > TacticType'),
+      tacticSkill: getText(match, 'HomeTeam > TacticSkill'),
+      ratingMidfield: getText(match, 'HomeTeam > RatingMidfield'),
+      ratingRightDef: getText(match, 'HomeTeam > RatingRightDef'),
+      ratingMidDef: getText(match, 'HomeTeam > RatingMidDef'),
+      ratingLeftDef: getText(match, 'HomeTeam > RatingLeftDef'),
+      ratingRightAtt: getText(match, 'HomeTeam > RatingRightAtt'),
+      ratingMidAtt: getText(match, 'HomeTeam > RatingMidAtt'),
+      ratingLeftAtt: getText(match, 'HomeTeam > RatingLeftAtt')
+    },
+    
+    awayTeam: {
+      teamId: getText(match, 'AwayTeam > AwayTeamID'),
+      teamName: getText(match, 'AwayTeam > AwayTeamName'),
+      dressURI: getText(match, 'AwayTeam > DressURI'),
+      formation: getText(match, 'AwayTeam > Formation'),
+      tacticType: getText(match, 'AwayTeam > TacticType'),
+      tacticSkill: getText(match, 'AwayTeam > TacticSkill'),
+      ratingMidfield: getText(match, 'AwayTeam > RatingMidfield'),
+      ratingRightDef: getText(match, 'AwayTeam > RatingRightDef'),
+      ratingMidDef: getText(match, 'AwayTeam > RatingMidDef'),
+      ratingLeftDef: getText(match, 'AwayTeam > RatingLeftDef'),
+      ratingRightAtt: getText(match, 'AwayTeam > RatingRightAtt'),
+      ratingMidAtt: getText(match, 'AwayTeam > RatingMidAtt'),
+      ratingLeftAtt: getText(match, 'AwayTeam > RatingLeftAtt')
+    },
+    
+    arena: {
+      arenaId: getText(match, 'Arena > ArenaID'),
+      arenaName: getText(match, 'Arena > ArenaName'),
+      weatherId: getText(match, 'Arena > WeatherID'),
+      soldTotal: getText(match, 'Arena > SoldTotal')
+    },
+    
+    scoreboard: {
+      homeGoals: getText(match, 'HomeTeam > HomeGoals', '0'),
+      awayGoals: getText(match, 'AwayTeam > AwayGoals', '0')
+    },
+    
+    // Parse events (goals, cards, injuries, etc.)
+    events: getElements(match, 'Scoreboard > Goal').map(goal => ({
+      type: 'goal',
+      minute: getText(goal, 'Minute'),
+      matchPart: getText(goal, 'MatchPart'),
+      subjectTeamId: getText(goal, 'SubjectTeamID'),
+      subjectPlayerId: getText(goal, 'SubjectPlayerID'),
+      subjectPlayerName: getText(goal, 'SubjectPlayerName'),
+      objectPlayerId: getText(goal, 'ObjectPlayerID'),
+      objectPlayerName: getText(goal, 'ObjectPlayerName')
+    })),
+    
+    // Additional data
+    possessionFirstHalfHome: getText(match, 'PossessionFirstHalfHome'),
+    possessionFirstHalfAway: getText(match, 'PossessionFirstHalfAway'),
+    possessionSecondHalfHome: getText(match, 'PossessionSecondHalfHome'),
+    possessionSecondHalfAway: getText(match, 'PossessionSecondHalfAway')
+  };
+  
+  return matchData;
+}
+
+// Format raw XML for display in dev mode
+function formatRawXML(xmlText) {
+  // Escape and format XML for display
+  const escaped = escapeHtml(xmlText);
+  return `
+    <div class="raw-xml-display">
+      <div class="dev-mode-header">
+        <h3>🔧 Dev Mode - Raw XML Response</h3>
+        <p class="dev-mode-note">This is the raw XML response from the Hattrick API</p>
+      </div>
+      <pre class="xml-content">${escaped}</pre>
+    </div>
+  `;
+}
+
+// Format error message with optional tip
+function formatErrorMessage(errorText, showDevModeTip = false) {
+  let message = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(errorText)}`;
+  if (showDevModeTip) {
+    message += `<br><br><small>Tip: Enable "Dev Mode" in the extension popup to view the raw XML response.</small>`;
+  }
+  message += `</div>`;
+  return message;
+}
+
 // Format match data as HTML
 function formatMatchData(data) {
   return `
@@ -433,6 +566,50 @@ function createSidePane() {
       text-align: center;
       font-size: 13px;
     }
+    
+    /* Dev Mode Styles */
+    .raw-xml-display {
+      background: #f9fafb;
+      border: 2px solid #3b82f6;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .dev-mode-header {
+      background: #3b82f6;
+      color: white;
+      padding: 15px;
+      border-radius: 6px 6px 0 0;
+    }
+    
+    .dev-mode-header h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .dev-mode-note {
+      margin: 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    .xml-content {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 20px;
+      margin: 0;
+      border-radius: 0 0 6px 6px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
   `;
   
   document.head.appendChild(style);
@@ -473,7 +650,7 @@ async function loadMatchData() {
   try {
     const matchId = getMatchIdFromUrl();
     if (!matchId) {
-      contentDiv.innerHTML = '<div class="error-message">No match ID found in URL</div>';
+      contentDiv.innerHTML = formatErrorMessage('No match ID found in URL');
       return;
     }
     
@@ -485,16 +662,37 @@ async function loadMatchData() {
     });
     
     if (response.success) {
-      console.log('Match data received:', response.data);
-      contentDiv.innerHTML = formatMatchData(response.data);
+      console.log('Match data received (raw XML)');
+      
+      // Check if dev mode is enabled
+      const storage = await chrome.storage.local.get(['devMode']);
+      const devMode = storage.devMode || false;
+      
+      if (devMode) {
+        // In dev mode, display raw XML without parsing
+        console.log('Dev mode enabled - showing raw XML');
+        contentDiv.innerHTML = formatRawXML(response.data);
+      } else {
+        // In normal mode, parse and format the data
+        try {
+          const parsedData = parseMatchXML(response.data);
+          console.log('Match data parsed:', parsedData);
+          contentDiv.innerHTML = formatMatchData(parsedData);
+        } catch (parseError) {
+          console.error('XML parsing error:', parseError);
+          contentDiv.innerHTML = formatErrorMessage('XML Parsing Error: ' + parseError.message, true);
+          return;
+        }
+      }
+      
       sidePane.dataset.loaded = 'true';
     } else {
       console.error('Failed to fetch match data:', response.error);
-      contentDiv.innerHTML = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(response.error)}</div>`;
+      contentDiv.innerHTML = formatErrorMessage(response.error);
     }
   } catch (error) {
     console.error('Error loading match data:', error);
-    contentDiv.innerHTML = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(error.message)}</div>`;
+    contentDiv.innerHTML = formatErrorMessage(error.message);
   }
 }
 
