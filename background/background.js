@@ -1,8 +1,8 @@
 // Background service worker for Chrome extension
 console.log('Hattrick Matchview background service worker loaded');
 
-// Import API client using importScripts
-importScripts('api/chppApiClient.js');
+// Import API client using importScripts (path relative to extension root)
+importScripts('/api/chppApiClient.js');
 
 // Initialize API client for background context
 let apiClient = null;
