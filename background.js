@@ -212,12 +212,14 @@ async function generateSignature(method, url, params, consumerSecret, tokenSecre
 }
 
 function buildAuthHeader(params) {
-  const headerParams = Object.keys(params)
+  // Only include OAuth parameters in the Authorization header (not API query parameters)
+  const oauthParams = Object.keys(params)
+    .filter(key => key.startsWith('oauth_'))
     .sort()
     .map(key => `${encodeURIComponent(key)}="${encodeURIComponent(params[key])}"`)
     .join(', ');
   
-  return `OAuth ${headerParams}`;
+  return `OAuth ${oauthParams}`;
 }
 
 function generateNonce() {
@@ -278,12 +280,17 @@ async function fetchMatchData(matchId) {
     throw new Error('Invalid match ID format');
   }
   
-  const apiUrl = `https://chpp.hattrick.org/chppxml.ashx?file=matchdetails&version=3.0&matchId=${encodeURIComponent(matchId)}`;
+  // Base URL without query parameters (required for OAuth signature)
+  const baseUrl = 'https://chpp.hattrick.org/chppxml.ashx';
   
   const timestamp = Math.floor(Date.now() / 1000);
   const nonce = generateNonce();
   
+  // All parameters including API query parameters (required for OAuth signature)
   const params = {
+    file: 'matchdetails',
+    version: '3.1',
+    matchID: matchId,
     oauth_consumer_key: CONSUMER_KEY,
     oauth_token: result.accessToken,
     oauth_signature_method: 'HMAC-SHA1',
@@ -292,8 +299,12 @@ async function fetchMatchData(matchId) {
     oauth_version: '1.0'
   };
   
-  const signature = await generateSignature('GET', apiUrl, params, CONSUMER_SECRET, result.accessTokenSecret);
+  // Generate signature with all parameters
+  const signature = await generateSignature('GET', baseUrl, params, CONSUMER_SECRET, result.accessTokenSecret);
   params.oauth_signature = signature;
+  
+  // Build full URL with query parameters
+  const apiUrl = `${baseUrl}?file=matchdetails&version=3.1&matchID=${encodeURIComponent(matchId)}`;
   
   const response = await fetch(apiUrl, {
     method: 'GET',
@@ -388,8 +399,8 @@ function parseMatchXML(xmlText) {
     },
     
     scoreboard: {
-      homeGoals: getText(match, 'HomeTeam > Goals', '0'),
-      awayGoals: getText(match, 'AwayTeam > Goals', '0')
+      homeGoals: getText(match, 'HomeTeam > HomeGoals', '0'),
+      awayGoals: getText(match, 'AwayTeam > AwayGoals', '0')
     },
     
     // Parse events (goals, cards, injuries, etc.)
